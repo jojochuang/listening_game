@@ -435,7 +435,7 @@
         <div id="gameView" class="hidden">
         <header>
             <div class="status-bar">
-                <a href="" class="back-link" id="backToMenu">← 返回選單</a>
+                <a href="index.html" class="back-link" id="backToMenu">← 返回選單</a>
                 <span class="status-pill" id="scoreText">得分：0</span>
                 <span class="status-pill" id="progressText">第 0 / 0 題</span>
             </div>
@@ -960,16 +960,9 @@
             document.body.classList.add('game-page');
             if (menuView) menuView.classList.add('hidden');
             if (gameView) gameView.classList.remove('hidden');
-            const url = getSheetCsvUrl(sheetId, gid);
             setMessage('正在載入題目…', 'info');
             try {
-                const resp = await fetch(url);
-                if (!resp.ok) {
-                    setMessage('載入試算表失敗：HTTP ' + resp.status, 'error');
-                    return;
-                }
-                const csv = await resp.text();
-                const rows = parseCSV(csv);
+                const rows = await fetchSheetCsv(sheetId, gid);
                 if (!rows.length) {
                     setMessage('試算表是空的或格式不正確。', 'error');
                     return;
@@ -992,7 +985,7 @@
                 });
             } catch (e) {
                 console.error(e);
-                setMessage('載入題目時發生錯誤：' + e, 'error');
+                setMessage('載入題目時發生錯誤：' + (e && e.message ? e.message : e), 'error');
             }
 
             if ('speechSynthesis' in window) {

@@ -709,9 +709,25 @@
             return protocol + '//' + host;
         }
 
-        async function fetchSheetCsv(sid, gidVal) {
+        function useCorsProxy() {
+            const h = window.location.hostname;
+            if (window.location.protocol === 'file:' || !h) return false;
+            if (h === 'localhost' || h === '127.0.0.1') return false;
+            if (/^192\.168\.\d+\.\d+$/.test(h) || /^10\./.test(h)) return false;
+            return true;
+        }
+
+        function getSheetCsvUrl(sid, gidVal) {
+            const googleUrl = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sid) + '/export?format=csv&gid=' + encodeURIComponent(gidVal);
+            if (useCorsProxy()) {
+                return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl);
+            }
             const base = getSheetBase();
-            const url = base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal);
+            return base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal);
+        }
+
+        async function fetchSheetCsv(sid, gidVal) {
+            const url = getSheetCsvUrl(sid, gidVal);
             const resp = await fetch(url);
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const csv = await resp.text();
@@ -917,8 +933,7 @@
             document.body.classList.add('game-page');
             if (menuView) menuView.classList.add('hidden');
             if (gameView) gameView.classList.remove('hidden');
-            const base = getSheetBase();
-            const url = base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sheetId) + '&gid=' + encodeURIComponent(gid);
+            const url = getSheetCsvUrl(sheetId, gid);
             setMessage('正在載入題目…', 'info');
             try {
                 const resp = await fetch(url);

@@ -2,18 +2,25 @@
 
 以瀏覽器播放題目語音，從六個選項中選出正確答案的聽力練習遊戲。支援課本／課次選單、圖片＋注音與全注音兩種模式。
 
+**純前端**：在 GitHub Pages 上可直接運行，無需後端；題庫透過 CORS 代理讀取 Google 試算表。
+
 ## 使用方式
 
-1. **啟動本機伺服器**（必須，否則無法讀取試算表題庫）：
-   ```bash
-   python3 server.py
-   ```
-2. 用瀏覽器開啟：**http://localhost:5002/listening_game.html**
-3. 在選單選擇課本、第幾課與模式，點「開始遊戲」即可遊玩。
+### 方式一：GitHub Pages（推薦）
+
+1. 在 repo 設定中啟用 **GitHub Pages**（Source: main branch）。
+2. 開啟：**https://\<你的帳號\>.github.io/listening_game/**  
+   或 **https://\<你的帳號\>.github.io/listening_game/listening_game.html**
+3. 選課本、課次與模式後即可遊玩。試算表需設為「知道連結的任何人可檢視」。
+
+### 方式二：本機伺服器
+
+1. 執行：`python3 server.py`
+2. 開啟：**http://localhost:5002/listening_game.html**  
+   （使用本機 API 讀取試算表，不依賴外部代理。）
 
 ## 需求
 
-- Python 3.6+
 - 題庫為 Google 試算表，需設為「知道連結的任何人可檢視」
 - 建議使用 Chrome / Safari / Edge 以獲得較佳語音與相容性
 

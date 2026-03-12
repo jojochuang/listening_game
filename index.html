@@ -720,7 +720,7 @@
                 if (proxyIndex === 1) {
                     return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl);
                 }
-                return 'https://corsproxy.io/?' + encodeURIComponent(googleUrl);
+                return 'https://corsproxy.io/?url=' + encodeURIComponent(googleUrl);
             }
             const base = getSheetBase();
             return base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal);
@@ -782,6 +782,8 @@
                         lessonSelect.innerHTML = '<option value="">請先選課本</option>';
                         return;
                     }
+                    const errEl = document.getElementById('menuError');
+                    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
                     try {
                         const sheetRows = await fetchSheetCsv(DEFAULT_MENU_SHEET, gidVal);
                         let dataCount = 0;
@@ -794,6 +796,11 @@
                         lessonSelect.innerHTML = Array.from({ length: numLessons }, (_, i) => '<option value="' + (i + 1) + '">第 ' + (i + 1) + ' 課</option>').join('');
                     } catch (e) {
                         lessonSelect.innerHTML = '<option value="">載入失敗</option>';
+                        if (errEl) {
+                            errEl.style.display = 'block';
+                            errEl.textContent = '載入課次失敗：' + e.message + '（請確認試算表已設為「知道連結的任何人可檢視」）';
+                            errEl.className = 'message error';
+                        }
                     }
                 });
 

@@ -257,9 +257,44 @@
             margin-top: 10px;
             flex-shrink: 0;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
             gap: 12px;
             flex-wrap: wrap;
+        }
+        .lesson-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .lesson-arrow {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #42a5f5;
+            background: #e3f2fd;
+            color: #1565c0;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+        }
+        .lesson-arrow:hover {
+            background: #42a5f5;
+            color: white;
+        }
+        .lesson-arrow:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        #lessonLabel {
+            font-size: 1em;
+            color: #333;
+            min-width: 4em;
+            text-align: center;
         }
         .btn {
             padding: 10px 20px;
@@ -452,6 +487,11 @@
         </div>
 
         <div class="bottom-bar">
+            <div class="lesson-switcher">
+                <button type="button" class="lesson-arrow" id="lessonPrev" aria-label="上一課">←</button>
+                <span id="lessonLabel">第 1 課</span>
+                <button type="button" class="lesson-arrow" id="lessonNext" aria-label="下一課">→</button>
+            </div>
             <button class="btn btn-primary" id="playBtn">播放</button>
         </div>
 
@@ -605,6 +645,9 @@
         let questionOrder = [];
         let currentIndex = 0;
         let score = 0;
+        let sheetRows = [];
+        let numLessons = 1;
+        let currentLesson = 1;
         let locked = false;
         let isFirstRender = true;
 
@@ -972,6 +1015,47 @@
             });
         }
 
+        function updateLessonUI() {
+            const label = document.getElementById('lessonLabel');
+            const prevBtn = document.getElementById('lessonPrev');
+            const nextBtn = document.getElementById('lessonNext');
+            if (label) label.textContent = '第 ' + currentLesson + ' 課';
+            if (prevBtn) prevBtn.disabled = currentLesson <= 1;
+            if (nextBtn) nextBtn.disabled = currentLesson >= numLessons;
+        }
+
+        function applyLesson(lesson) {
+            if (!sheetRows.length || lesson < 1 || lesson > numLessons) return;
+            currentLesson = lesson;
+            questions = buildQuestionPool(sheetRows, currentLesson);
+            if (!questions.length) return;
+            questionOrder = shuffle(questions.map((_, i) => i));
+            currentIndex = 0;
+            score = 0;
+            scoreText.textContent = '得分：0';
+            progressText.textContent = '第 1 / ' + questions.length + ' 題';
+            setMessage('', '');
+            const overlay = document.getElementById('startOverlay');
+            if (overlay) overlay.style.display = 'none';
+            updateLessonUI();
+            renderQuestion();
+            if (window.history && window.history.replaceState) {
+                const q = new URLSearchParams(window.location.search);
+                q.set('lesson', String(currentLesson));
+                window.history.replaceState(null, '', (window.location.pathname || 'index.html') + '?' + q.toString());
+            }
+        }
+
+        function goPrevLesson() {
+            if (currentLesson <= 1) return;
+            applyLesson(currentLesson - 1);
+        }
+
+        function goNextLesson() {
+            if (currentLesson >= numLessons) return;
+            applyLesson(currentLesson + 1);
+        }
+
         async function init() {
             if (!sheetId) {
                 initMenu();
@@ -988,7 +1072,10 @@
                     setMessage('試算表是空的或格式不正確。', 'error');
                     return;
                 }
-                questions = buildQuestionPool(rows, lessonParam || 0);
+                sheetRows = rows;
+                numLessons = Math.max(1, Math.ceil((rows.length - 1) / 20));
+                currentLesson = lessonParam && lessonParam >= 1 && lessonParam <= numLessons ? lessonParam : 1;
+                questions = buildQuestionPool(rows, currentLesson);
                 if (!questions.length) {
                     setMessage('沒有找到任何題目（請確認第2欄「題目」有內容）。', 'error');
                     return;
@@ -997,8 +1084,11 @@
                 currentIndex = 0;
                 score = 0;
                 scoreText.textContent = '得分：0';
+                updateLessonUI();
                 renderQuestion();
                 setMessage('載入完成', 'info');
+                document.getElementById('lessonPrev').addEventListener('click', goPrevLesson);
+                document.getElementById('lessonNext').addEventListener('click', goNextLesson);
                 document.getElementById('startOverlay').addEventListener('click', () => {
                     document.getElementById('startOverlay').style.display = 'none';
                     const ri = questionOrder[currentIndex];

@@ -557,23 +557,26 @@
         }
 
         function pickTTSCVoice() {
+            if (!('speechSynthesis' in window)) return null;
             const voices = window.speechSynthesis.getVoices();
             if (!voices || !voices.length) return null;
-            let best = null;
-            for (const v of voices) {
-                const name = (v.name || '').toLowerCase();
-                const lang = (v.lang || '').toLowerCase();
-                if (lang.startsWith('zh-tw')) {
-                    if (!best) best = v;
-                    if (name.includes('mei') || name.includes('jia') || name.includes('meijia')) {
-                        return v;
-                    }
-                }
+
+            const lower = s => (s || '').toLowerCase();
+
+            // 1. 優先 zh-TW，並盡量選到「美佳 / Meijia」
+            const zhTwVoices = voices.filter(v => lower(v.lang).startsWith('zh-tw'));
+            if (zhTwVoices.length) {
+                let preferred = zhTwVoices.find(v => v.name.includes('美佳') || lower(v.name).includes('meijia'));
+                if (!preferred) preferred = zhTwVoices[0];
+                return preferred;
             }
-            for (const v of voices) {
-                if ((v.lang || '').toLowerCase().startsWith('zh')) return v;
-            }
-            return best || voices[0];
+
+            // 2. 沒有 zh-TW，就選任一個中文語音（zh-*)
+            const zhVoices = voices.filter(v => lower(v.lang).startsWith('zh'));
+            if (zhVoices.length) return zhVoices[0];
+
+            // 3. 最後備援：用第一個可用聲音
+            return voices[0];
         }
 
         function playSound(name, shortenWrong) {

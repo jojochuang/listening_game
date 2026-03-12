@@ -718,9 +718,9 @@
             const googleUrl = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sid) + '/export?format=csv&gid=' + encodeURIComponent(gidVal);
             if (useCorsProxy()) {
                 if (proxyIndex === 1) {
-                    return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl);
+                    return 'https://corsproxy.io/?url=' + encodeURIComponent(googleUrl);
                 }
-                return 'https://corsproxy.io/?url=' + encodeURIComponent(googleUrl);
+                return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl);
             }
             const base = getSheetBase();
             return base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal);

@@ -43,23 +43,26 @@
             flex: 1;
             max-height: 100%;
         }
-        header {
+        header, .game-header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             margin-bottom: 8px;
             flex-wrap: wrap;
             gap: 8px;
             flex-shrink: 0;
-            position: relative;
         }
-        .title-banner {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
+        .game-header .title-banner {
+            position: relative;
+            left: auto;
+            transform: none;
+        }
+        .status-bar, .game-controls-top {
             display: flex;
-            justify-content: center;
-            pointer-events: none;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9em;
+            flex-wrap: wrap;
         }
         .title-banner-inner {
             background: linear-gradient(135deg, #ffb74d 0%, #ff9800 100%);
@@ -126,6 +129,57 @@
             flex: 1;
             min-height: 0;
         }
+        /* 小螢幕手機（如 iPhone SE）：綠框最小高度、控制列集中到底部 */
+        @media (max-width: 480px), (max-height: 700px) and (orientation: portrait) {
+            body.game-page #gameView {
+                display: flex !important;
+                flex-direction: column;
+                min-height: 0;
+            }
+            body.game-page #gameView .game-header {
+                order: 0;
+                flex-shrink: 0;
+                margin-bottom: 4px;
+            }
+            body.game-page #gameView .game-header .title-banner-inner {
+                font-size: 1.2em;
+                padding: 6px 20px;
+            }
+            body.game-page #gameView .game-controls-top {
+                order: 2;
+                margin-top: auto;
+                margin-bottom: 0;
+                padding: 8px 0 4px;
+                flex-shrink: 0;
+                justify-content: center;
+                gap: 8px;
+            }
+            body.game-page #gameView .grid {
+                order: 1;
+                flex: 1;
+                min-height: 0;
+                grid-auto-rows: minmax(88px, 1fr);
+                margin-top: 4px;
+            }
+            body.game-page #gameView .game-controls-bottom {
+                order: 3;
+                flex-shrink: 0;
+                margin-top: 6px;
+                padding-bottom: 4px;
+            }
+            body.game-page #gameView .card {
+                min-height: 72px;
+            }
+            body.game-page #gameView .card-zhuyin {
+                font-size: clamp(28px, 8vmin, 48px);
+            }
+            body.game-page #gameView .card-label {
+                font-size: 1.3em;
+            }
+            body.game-page #gameView #message {
+                order: 4;
+            }
+        }
         @media (max-width: 800px) {
             .grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -141,7 +195,7 @@
             .card-wrap .card { flex: 1; min-height: 0; }
             .card-zhuyin { font-size: clamp(36px, 10vmin, 72px); line-height: 1.05; letter-spacing: -0.03em; }
             .card-label { font-size: 1.2em; margin-top: 2px; flex-shrink: 0; }
-            .bottom-bar { margin-top: 4px; gap: 8px; flex-shrink: 0; }
+            .game-controls-bottom, .bottom-bar { margin-top: 4px; gap: 8px; flex-shrink: 0; }
             .btn { padding: 6px 14px; font-size: 0.9em; min-width: 90px; }
         }
         @media (orientation: landscape) and (max-height: 500px) {
@@ -153,7 +207,7 @@
             .card-wrap { min-height: 0; }
             .card-zhuyin { font-size: clamp(28px, 8vmin, 56px); line-height: 1.05; letter-spacing: -0.03em; }
             .card-label { font-size: 1em; margin-top: 2px; flex-shrink: 0; }
-            .bottom-bar { margin-top: 2px; gap: 6px; flex-shrink: 0; }
+            .game-controls-bottom, .bottom-bar { margin-top: 2px; gap: 6px; flex-shrink: 0; }
             .btn { padding: 4px 10px; font-size: 0.85em; min-width: 70px; }
         }
         .card-wrap {
@@ -253,6 +307,7 @@
             color: #444;
             text-align: center;
         }
+        .game-controls-bottom,
         .bottom-bar {
             margin-top: 10px;
             flex-shrink: 0;
@@ -468,25 +523,23 @@
             <button type="button" class="btn btn-primary" id="menuStart">開始遊戲</button>
         </div>
         <div id="gameView" class="hidden">
-        <header>
-            <div class="status-bar">
-                <a href="index.html" class="back-link" id="backToMenu">← 返回選單</a>
-                <span class="status-pill" id="scoreText">得分：0</span>
-                <span class="status-pill" id="progressText">第 0 / 0 題</span>
-            </div>
+        <header class="game-header">
             <div class="title-banner">
                 <div class="title-banner-inner">聽音辨字</div>
             </div>
-            <div class="status-bar">
-                <button type="button" class="mode-pill mode-btn" id="modeText">模式：圖片＋注音</button>
-            </div>
         </header>
+        <div class="game-controls-top">
+            <a href="index.html" class="back-link" id="backToMenu">← 返回選單</a>
+            <span class="status-pill" id="scoreText">得分：0</span>
+            <span class="status-pill" id="progressText">第 0 / 0 題</span>
+            <button type="button" class="mode-pill mode-btn" id="modeText">模式：圖片＋注音</button>
+        </div>
 
         <div class="grid" id="cardGrid">
             <!-- 卡片由 JS 動態產生 -->
         </div>
 
-        <div class="bottom-bar">
+        <div class="game-controls-bottom">
             <div class="lesson-switcher">
                 <button type="button" class="lesson-arrow" id="lessonPrev" aria-label="上一課">←</button>
                 <span id="lessonLabel">第 1 課</span>

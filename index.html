@@ -716,14 +716,17 @@
 
         function getSheetCsvUrl(sid, gidVal, proxyIndex) {
             const googleUrl = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sid) + '/export?format=csv&gid=' + encodeURIComponent(gidVal);
-            if (useCorsProxy()) {
-                if (proxyIndex === 1) {
-                    return 'https://corsproxy.io/?url=' + encodeURIComponent(googleUrl);
-                }
-                return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl);
+            if (!useCorsProxy()) {
+                const base = getSheetBase();
+                return { url: base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal), raw: true };
             }
-            const base = getSheetBase();
-            return base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal);
+            const proxies = [
+                { url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl), raw: true },
+                { url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(googleUrl), raw: false },
+                { url: 'https://thingproxy.freeboard.io/fetch/' + encodeURIComponent(googleUrl), raw: true },
+                { url: 'https://corsproxy.io/?url=' + encodeURIComponent(googleUrl), raw: true }
+            ];
+            return proxies[proxyIndex] || proxies[0];
         }
 
         function looksLikeCsv(text) {
@@ -732,16 +735,19 @@
         }
 
         async function fetchSheetCsv(sid, gidVal) {
-            for (let proxy = 0; proxy <= 1; proxy++) {
-                const url = getSheetCsvUrl(sid, gidVal, proxy);
+            const proxyCount = useCorsProxy() ? 4 : 1;
+            for (let proxy = 0; proxy < proxyCount; proxy++) {
+                const config = getSheetCsvUrl(sid, gidVal, proxy);
                 try {
-                    const resp = await fetch(url);
+                    const resp = await fetch(config.url);
                     if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                    const csv = await resp.text();
-                    if (!looksLikeCsv(csv)) throw new Error('試算表未開放檢視或代理失敗');
-                    return parseCSV(csv);
+                    const csv = config.raw ? await resp.text() : (await resp.json()).contents;
+                    if (csv === undefined || csv === null) throw new Error('無內容');
+                    const text = typeof csv === 'string' ? csv : String(csv);
+                    if (!looksLikeCsv(text)) throw new Error('試算表未開放檢視或代理失敗');
+                    return parseCSV(text);
                 } catch (e) {
-                    if (proxy === 1) throw e;
+                    if (proxy === proxyCount - 1) throw e;
                 }
             }
             throw new Error('無法取得試算表');

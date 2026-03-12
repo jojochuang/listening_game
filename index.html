@@ -620,12 +620,14 @@
 
         const params = getQueryParams();
         const DEFAULT_MENU_SHEET = '1264gdkuMnIn2k5L5KM69yumBfJFdYVhxzzsC-2R5Q2U';
-        /** 若公開代理皆失敗，可改用 Google Apps Script 代理：部署後取得網址，用 ?proxy=網址 開啟遊戲，例如：.../listening_game/?proxy=https://script.google.com/macros/s/你的ID/exec */
+        /** 若公開代理皆失敗，可改用 Google Apps Script 代理：部署後取得網址，用 ?proxy=網址 開啟遊戲 */
         const GAS_PROXY_URL = (params.proxy || '').trim().replace(/\/+$/, '');
         const sheetId = params.sheet_id || '';
         const gid = params.gid || '0';
         const lessonParam = params.lesson ? parseInt(params.lesson, 10) : 0;
         const mode = params.mode === 'hard' ? 'hard' : 'easy';
+        const staticMode = params.static === '1' || params.static === 'true';
+        const staticBookIndex = params.book !== undefined && params.book !== '' ? parseInt(params.book, 10) : -1;
         let currentEasyMode = (mode === 'easy');
         const modeTextEl = document.getElementById('modeText');
         function updateModeLabel() {
@@ -648,6 +650,7 @@
         let sheetRows = [];
         let numLessons = 1;
         let currentLesson = 1;
+        let staticBooks = [];
         let locked = false;
         let isFirstRender = true;
 
@@ -782,28 +785,22 @@
             return t.length > 0 && !t.startsWith('<') && !t.startsWith('{') && !t.startsWith('<!');
         }
 
+        async function fetchCsvFromUrl(url) {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const text = await resp.text();
+            if (!looksLikeCsv(text)) throw new Error('無效的 CSV');
+            return parseCSV(text);
+        }
+
         async function fetchSheetCsv(sid, gidVal) {
-            const proxyCount = useCorsProxy() ? (GAS_PROXY_URL ? 4 : 3) : 1;
-            const retryDelayMs = 5000;
-            const maxAttempts = 3;
-            for (let proxy = 0; proxy < proxyCount; proxy++) {
-                const config = getSheetCsvUrl(sid, gidVal, proxy);
-                for (let attempt = 0; attempt < maxAttempts; attempt++) {
-                    try {
-                        if (attempt > 0) await new Promise(r => setTimeout(r, retryDelayMs));
-                        const resp = await fetch(config.url);
-                        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                        const csv = config.raw ? await resp.text() : (await resp.json()).contents;
-                        if (csv === undefined || csv === null) throw new Error('無內容');
-                        const text = typeof csv === 'string' ? csv : String(csv);
-                        if (!looksLikeCsv(text)) throw new Error('試算表未開放檢視或代理失敗');
-                        return parseCSV(text);
-                    } catch (e) {
-                        if (attempt === maxAttempts - 1 && proxy === proxyCount - 1) throw e;
-                    }
-                }
-            }
-            throw new Error('無法取得試算表');
+            const gid = gidVal || '0';
+            const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sid)}/export?format=csv&gid=${encodeURIComponent(gid)}`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const text = await resp.text();
+            if (!looksLikeCsv(text)) throw new Error('試算表未開放檢視');
+            return parseCSV(text);
         }
 
         async function initMenu() {
@@ -815,9 +812,54 @@
             const lessonSelect = document.getElementById('menuLesson');
             const startBtn = document.getElementById('menuStart');
             if (!bookSelect || !lessonSelect || !startBtn) return;
-            if (bookSelect) bookSelect.innerHTML = '<option value="">載入中… 若較慢請稍候（約 30–60 秒）</option>';
+            if (bookSelect) bookSelect.innerHTML = '<option value="">載入中…</option>';
             const menuError = document.getElementById('menuError');
             if (menuError) { menuError.style.display = 'none'; menuError.textContent = ''; }
+            try {
+                const booksJsonResp = await fetch('books.json');
+                if (booksJsonResp.ok) {
+                    const list = await booksJsonResp.json();
+                    if (Array.isArray(list) && list.length > 0 && list[0].name && list[0].csv) {
+                        staticBooks = list;
+                        bookSelect.innerHTML = '<option value="">請選擇課本</option>' + staticBooks.map((b, i) => '<option value="' + i + '">' + escapeHtml(b.name) + '</option>').join('');
+                        lessonSelect.innerHTML = '<option value="">請選擇課</option>';
+                        bookSelect.addEventListener('change', async () => {
+                            const idx = bookSelect.value;
+                            lessonSelect.innerHTML = '<option value="">載入中…</option>';
+                            if (idx === '' || idx === undefined) {
+                                lessonSelect.innerHTML = '<option value="">請先選課本</option>';
+                                return;
+                            }
+                            const i = parseInt(idx, 10);
+                            if (i < 0 || i >= staticBooks.length) return;
+                            const errEl = document.getElementById('menuError');
+                            if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+                            try {
+                                const rows = await fetchCsvFromUrl(staticBooks[i].csv);
+                                const dataCount = rows.length - 1;
+                                const n = Math.max(1, Math.ceil(dataCount / 20));
+                                lessonSelect.innerHTML = Array.from({ length: n }, (_, k) => '<option value="' + (k + 1) + '">第 ' + (k + 1) + ' 課</option>').join('');
+                            } catch (e) {
+                                lessonSelect.innerHTML = '<option value="">載入失敗</option>';
+                                if (errEl) { errEl.style.display = 'block'; errEl.textContent = '載入失敗：' + e.message; errEl.className = 'message error'; }
+                            }
+                        });
+                        startBtn.addEventListener('click', () => {
+                            const idx = bookSelect.value;
+                            const lessonVal = lessonSelect.value;
+                            if (idx === '' || !lessonVal) return;
+                            const modeVal = document.getElementById('menuMode').value;
+                            const q = new URLSearchParams({ static: '1', book: idx, lesson: lessonVal, mode: modeVal });
+                            const path = window.location.pathname || '';
+                            const page = path ? path.split('/').pop() || 'index.html' : 'index.html';
+                            window.location.href = page + '?' + q.toString();
+                        });
+                        return;
+                    }
+                }
+            } catch (_) {}
+            staticBooks = [];
+            if (bookSelect) bookSelect.innerHTML = '<option value="">載入中… 若較慢請稍候（約 30–60 秒）</option>';
             try {
                 const rows = await fetchSheetCsv(DEFAULT_MENU_SHEET, '0');
                 const books = [];
@@ -1046,6 +1088,10 @@
             if (window.history && window.history.replaceState) {
                 const q = new URLSearchParams(window.location.search);
                 q.set('lesson', String(currentLesson));
+                if (staticMode && staticBookIndex >= 0) {
+                    q.set('static', '1');
+                    q.set('book', String(staticBookIndex));
+                }
                 window.history.replaceState(null, '', (window.location.pathname || 'index.html') + '?' + q.toString());
             }
         }
@@ -1061,6 +1107,47 @@
         }
 
         async function init() {
+            if (staticMode && staticBookIndex >= 0) {
+                document.body.classList.remove('menu-page');
+                document.body.classList.add('game-page');
+                if (menuView) menuView.classList.add('hidden');
+                if (gameView) gameView.classList.remove('hidden');
+                setMessage('正在載入題目…', 'info');
+                try {
+                    const booksResp = await fetch('books.json');
+                    if (!booksResp.ok) throw new Error('找不到 books.json');
+                    const list = await booksResp.json();
+                    if (!Array.isArray(list) || staticBookIndex >= list.length || !list[staticBookIndex].csv) throw new Error('課本設定錯誤');
+                    const rows = await fetchCsvFromUrl(list[staticBookIndex].csv);
+                    if (!rows.length) { setMessage('CSV 是空的。', 'error'); return; }
+                    sheetRows = rows;
+                    numLessons = Math.max(1, Math.ceil((rows.length - 1) / 20));
+                    currentLesson = lessonParam && lessonParam >= 1 && lessonParam <= numLessons ? lessonParam : 1;
+                    questions = buildQuestionPool(rows, currentLesson);
+                    if (!questions.length) { setMessage('沒有找到任何題目。', 'error'); return; }
+                    questionOrder = shuffle(questions.map((_, i) => i));
+                    currentIndex = 0;
+                    score = 0;
+                    scoreText.textContent = '得分：0';
+                    updateLessonUI();
+                    renderQuestion();
+                    setMessage('載入完成', 'info');
+                    document.getElementById('lessonPrev').addEventListener('click', goPrevLesson);
+                    document.getElementById('lessonNext').addEventListener('click', goNextLesson);
+                    document.getElementById('startOverlay').addEventListener('click', () => {
+                        document.getElementById('startOverlay').style.display = 'none';
+                        const ri = questionOrder[currentIndex];
+                        if (questions[ri]) speakAfterUnlock(questions[ri].rawText);
+                    });
+                } catch (e) {
+                    console.error(e);
+                    setMessage('載入題目時發生錯誤：' + (e && e.message ? e.message : e), 'error');
+                }
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.onvoiceschanged = () => pickTTSCVoice();
+                }
+                return;
+            }
             if (!sheetId) {
                 initMenu();
                 return;

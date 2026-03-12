@@ -784,10 +784,11 @@
 
         async function fetchSheetCsv(sid, gidVal) {
             const proxyCount = useCorsProxy() ? (GAS_PROXY_URL ? 4 : 3) : 1;
-            const retryDelayMs = 2500;
+            const retryDelayMs = 5000;
+            const maxAttempts = 3;
             for (let proxy = 0; proxy < proxyCount; proxy++) {
                 const config = getSheetCsvUrl(sid, gidVal, proxy);
-                for (let attempt = 0; attempt < 2; attempt++) {
+                for (let attempt = 0; attempt < maxAttempts; attempt++) {
                     try {
                         if (attempt > 0) await new Promise(r => setTimeout(r, retryDelayMs));
                         const resp = await fetch(config.url);
@@ -798,7 +799,7 @@
                         if (!looksLikeCsv(text)) throw new Error('試算表未開放檢視或代理失敗');
                         return parseCSV(text);
                     } catch (e) {
-                        if (attempt === 1 && proxy === proxyCount - 1) throw e;
+                        if (attempt === maxAttempts - 1 && proxy === proxyCount - 1) throw e;
                     }
                 }
             }
@@ -814,7 +815,7 @@
             const lessonSelect = document.getElementById('menuLesson');
             const startBtn = document.getElementById('menuStart');
             if (!bookSelect || !lessonSelect || !startBtn) return;
-            if (bookSelect) bookSelect.innerHTML = '<option value="">載入中… 若較慢請稍候（約 10–30 秒）</option>';
+            if (bookSelect) bookSelect.innerHTML = '<option value="">載入中… 若較慢請稍候（約 30–60 秒）</option>';
             const menuError = document.getElementById('menuError');
             if (menuError) { menuError.style.display = 'none'; menuError.textContent = ''; }
             try {
@@ -888,8 +889,11 @@
                     } else {
                         msg += '（請確認試算表已設為「知道連結的任何人可檢視」）';
                     }
-                    menuError.textContent = msg;
+                    msg += ' ';
+                    menuError.innerHTML = msg + '<button type="button" class="btn btn-secondary" style="margin-left:8px;padding:6px 14px;" id="menuRetryBtn">再試一次</button>';
                     menuError.className = 'message error';
+                    const retryBtn = document.getElementById('menuRetryBtn');
+                    if (retryBtn) retryBtn.addEventListener('click', () => { window.location.reload(); });
                 }
                 if (bookSelect) bookSelect.innerHTML = '<option value="">載入失敗，請重新整理</option>';
                 if (lessonSelect) lessonSelect.innerHTML = '<option value="">請先選課本</option>';
@@ -1065,7 +1069,7 @@
             document.body.classList.add('game-page');
             if (menuView) menuView.classList.add('hidden');
             if (gameView) gameView.classList.remove('hidden');
-            setMessage('正在載入題目… 若較慢請稍候（約 10–30 秒）', 'info');
+            setMessage('正在載入題目… 若較慢請稍候（約 30–60 秒）', 'info');
             try {
                 const rows = await fetchSheetCsv(sheetId, gid);
                 if (!rows.length) {

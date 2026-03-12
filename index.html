@@ -129,15 +129,18 @@
             flex: 1;
             min-height: 0;
         }
-        /* 小螢幕手機（如 iPhone SE）：綠框最小高度、控制列集中到底部 */
+        /* 小螢幕手機（如 iPhone SE）：可上下滑動、控制列固定畫面最底部、綠框有最小高度 */
         @media (max-width: 480px), (max-height: 700px) and (orientation: portrait) {
             body.game-page #gameView {
                 display: flex !important;
                 flex-direction: column;
                 min-height: 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                flex: 1;
+                padding-bottom: 170px;
             }
             body.game-page #gameView .game-header {
-                order: 0;
                 flex-shrink: 0;
                 margin-bottom: 4px;
             }
@@ -146,26 +149,35 @@
                 padding: 6px 20px;
             }
             body.game-page #gameView .game-controls-top {
-                order: 2;
-                margin-top: auto;
-                margin-bottom: 0;
-                padding: 8px 0 4px;
-                flex-shrink: 0;
+                position: fixed;
+                bottom: 58px;
+                left: 0;
+                right: 0;
+                z-index: 60;
+                margin: 0;
+                padding: 8px 12px;
+                background: #f0f4ff;
+                box-shadow: 0 -1px 0 rgba(0,0,0,0.08);
                 justify-content: center;
                 gap: 8px;
             }
+            body.game-page #gameView .game-controls-bottom {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 61;
+                margin: 0;
+                padding: 10px 12px;
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+                background: #fff;
+                box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
+            }
             body.game-page #gameView .grid {
-                order: 1;
                 flex: 1;
                 min-height: 0;
                 grid-auto-rows: minmax(88px, 1fr);
                 margin-top: 4px;
-            }
-            body.game-page #gameView .game-controls-bottom {
-                order: 3;
-                flex-shrink: 0;
-                margin-top: 6px;
-                padding-bottom: 4px;
             }
             body.game-page #gameView .card {
                 min-height: 72px;
@@ -175,9 +187,6 @@
             }
             body.game-page #gameView .card-label {
                 font-size: 1.3em;
-            }
-            body.game-page #gameView #message {
-                order: 4;
             }
         }
         @media (max-width: 800px) {

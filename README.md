@@ -10,13 +10,13 @@
 
 1. 在 repo 設定中啟用 **GitHub Pages**（Source: main branch）。
 2. 開啟：**https://\<你的帳號\>.github.io/listening_game/**  
-   或 **https://\<你的帳號\>.github.io/listening_game/listening_game.html**
+   （首頁即為遊戲，無須再加檔名。）
 3. 選課本、課次與模式後即可遊玩。試算表需設為「知道連結的任何人可檢視」。
 
 ### 方式二：本機伺服器
 
 1. 執行：`python3 server.py`
-2. 開啟：**http://localhost:5002/listening_game.html**  
+2. 開啟：**http://localhost:5002/** 或 **http://localhost:5002/index.html**  
    （使用本機 API 讀取試算表，不依賴外部代理。）
 
 ## 需求
@@ -28,7 +28,7 @@
 
 | 檔案 | 說明 |
 |------|------|
-| `listening_game.html` | 遊戲主頁（選單＋遊戲畫面） |
+| `index.html` | 遊戲主頁（選單＋遊戲畫面） |
 | `server.py` | 本機伺服器（靜態檔＋試算表 CSV 代理） |
 | `BpmfSpecial/BpmfZihiOnly-R.ttf` | 注音字型（顯示題目注音） |
 

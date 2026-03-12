@@ -3,7 +3,7 @@
 """
 聽音辨字遊戲 - 本機伺服器
 提供靜態檔案與 /api/sheet_csv（代理 Google 試算表 CSV），避免 CORS 問題。
-執行後用瀏覽器開啟 http://localhost:5002/listening_game.html
+執行後用瀏覽器開啟 http://localhost:5002/ 或 http://localhost:5002/index.html
 """
 
 import http.server
@@ -69,7 +69,7 @@ def main():
     os.chdir(DIRECTORY)
     with socketserver.TCPServer(("", PORT), ListeningGameHandler) as httpd:
         print(f"聽音辨字遊戲伺服器: http://localhost:{PORT}/")
-        print(f"請開啟: http://localhost:{PORT}/listening_game.html")
+        print(f"請開啟: http://localhost:{PORT}/")
         print("按 Ctrl+C 結束")
         httpd.serve_forever()
 

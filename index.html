@@ -414,6 +414,7 @@
     <div class="container">
         <div id="menuView" class="menu-view hidden">
             <h2>關卡選單</h2>
+            <div id="menuError" class="message error" style="display:none; margin-bottom:8px;"></div>
             <div class="menu-row">
                 <label>課本</label>
                 <select id="menuBook"></select>
@@ -713,21 +714,37 @@
             return true;
         }
 
-        function getSheetCsvUrl(sid, gidVal) {
+        function getSheetCsvUrl(sid, gidVal, proxyIndex) {
             const googleUrl = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sid) + '/export?format=csv&gid=' + encodeURIComponent(gidVal);
             if (useCorsProxy()) {
-                return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl);
+                if (proxyIndex === 1) {
+                    return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl);
+                }
+                return 'https://corsproxy.io/?' + encodeURIComponent(googleUrl);
             }
             const base = getSheetBase();
             return base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal);
         }
 
+        function looksLikeCsv(text) {
+            const t = (text || '').trim();
+            return t.length > 0 && !t.startsWith('<') && !t.startsWith('{') && !t.startsWith('<!');
+        }
+
         async function fetchSheetCsv(sid, gidVal) {
-            const url = getSheetCsvUrl(sid, gidVal);
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const csv = await resp.text();
-            return parseCSV(csv);
+            for (let proxy = 0; proxy <= 1; proxy++) {
+                const url = getSheetCsvUrl(sid, gidVal, proxy);
+                try {
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const csv = await resp.text();
+                    if (!looksLikeCsv(csv)) throw new Error('試算表未開放檢視或代理失敗');
+                    return parseCSV(csv);
+                } catch (e) {
+                    if (proxy === 1) throw e;
+                }
+            }
+            throw new Error('無法取得試算表');
         }
 
         async function initMenu() {
@@ -739,6 +756,9 @@
             const lessonSelect = document.getElementById('menuLesson');
             const startBtn = document.getElementById('menuStart');
             if (!bookSelect || !lessonSelect || !startBtn) return;
+            if (bookSelect) bookSelect.innerHTML = '<option value="">載入中…</option>';
+            const menuError = document.getElementById('menuError');
+            if (menuError) { menuError.style.display = 'none'; menuError.textContent = ''; }
             try {
                 const rows = await fetchSheetCsv(DEFAULT_MENU_SHEET, '0');
                 const books = [];
@@ -794,10 +814,14 @@
                 });
             } catch (e) {
                 console.error(e);
-                if (messageEl) {
-                    messageEl.textContent = '無法載入關卡選單：' + e.message;
-                    messageEl.className = 'message error';
+                const menuError = document.getElementById('menuError');
+                if (menuError) {
+                    menuError.style.display = 'block';
+                    menuError.textContent = '無法載入關卡選單：' + e.message + '（請確認試算表已設為「知道連結的任何人可檢視」）';
+                    menuError.className = 'message error';
                 }
+                if (bookSelect) bookSelect.innerHTML = '<option value="">載入失敗，請重新整理</option>';
+                if (lessonSelect) lessonSelect.innerHTML = '<option value="">請先選課本</option>';
             }
         }
 

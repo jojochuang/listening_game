@@ -468,6 +468,47 @@
         .hidden {
             display: none;
         }
+        .night-toggle {
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid #888;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        .night-toggle:hover { background: #eee; }
+        body.night-mode .night-toggle {
+            background: rgba(40,40,40,0.9);
+            color: #ddd;
+            border-color: #666;
+        }
+        body.night-mode .night-toggle:hover { background: #333; }
+        /* 夜覽模式：黑底白字，減少藍光 */
+        body.night-mode { background: #0d0d0d !important; }
+        body.night-mode .container { background: #0d0d0d !important; }
+        body.night-mode .game-header,
+        body.night-mode .game-controls-bottom { background: #0d0d0d !important; }
+        body.night-mode .game-header { box-shadow: 0 1px 0 rgba(255,255,255,0.1); }
+        body.night-mode .game-controls-bottom { box-shadow: 0 -2px 12px rgba(255,255,255,0.1); }
+        body.night-mode .back-link { color: #90caf9; background: #1a1a2e; }
+        body.night-mode .status-pill { color: #90caf9; background: #1a1a2e; }
+        body.night-mode .card { background: #1a1a1a; border-color: #2d5a2d; }
+        body.night-mode .card.correct { background: #0d2b0d; border-color: #2d7a2d; }
+        body.night-mode .card.wrong { background: #2b0d0d; border-color: #7a2d2d; }
+        body.night-mode .card-main { background: transparent; }
+        body.night-mode .card-zhuyin { color: #fff; }
+        body.night-mode .card-label { color: #fff; }
+        body.night-mode #lessonLabel { color: #ddd; }
+        body.night-mode .lesson-arrow { background: #1a1a2e; color: #90caf9; border-color: #42a5f5; }
+        body.night-mode .lesson-arrow:hover { background: #42a5f5; color: #fff; }
+        body.night-mode .message { color: #aaa; }
+        body.night-mode .message.info { color: #90caf9; }
+        body.night-mode .mode-pill { background: #2d1a4e; color: #ce93d8; }
+        body.night-mode .menu-view h2 { color: #eee; }
+        body.night-mode .menu-row label { color: #bbb; }
+        body.night-mode .menu-row select { background: #1a1a1a; color: #fff; border-color: #444; }
+        body.night-mode .start-overlay span { background: #1a1a1a; color: #fff; }
         /* 選單頁：只顯示選單，全畫面 */
         body.menu-page #gameView {
             display: none !important;
@@ -593,6 +634,7 @@
                     <option value="hard">全注音</option>
                 </select>
             </div>
+            <button type="button" class="night-toggle" id="nightToggleMenu" title="夜覽模式（黑底白字，減少藍光）">夜覽</button>
             <button type="button" class="btn btn-primary" id="menuStart">開始遊戲</button>
         </div>
         <div id="gameView" class="hidden">
@@ -602,6 +644,7 @@
                 <div class="title-banner-inner">聽音辨字</div>
             </div>
             <div class="header-right">
+                <button type="button" class="night-toggle" id="nightToggle" title="夜覽模式（黑底白字，減少藍光）">夜覽</button>
                 <span class="status-pill" id="scoreText">得分：0</span>
                 <span class="status-pill" id="progressText">0/0</span>
             </div>
@@ -630,6 +673,22 @@
     </div>
 
     <script>
+        (function initNightMode() {
+            const key = 'listening_game_night';
+            const btns = [document.getElementById('nightToggle'), document.getElementById('nightToggleMenu')].filter(Boolean);
+            const active = localStorage.getItem(key) === '1';
+            if (active) document.body.classList.add('night-mode');
+            function updateLabels() {
+                const on = document.body.classList.contains('night-mode');
+                btns.forEach(b => { b.textContent = on ? '日間' : '夜覽'; });
+            }
+            updateLabels();
+            btns.forEach(btn => btn.addEventListener('click', () => {
+                document.body.classList.toggle('night-mode');
+                localStorage.setItem(key, document.body.classList.contains('night-mode') ? '1' : '0');
+                updateLabels();
+            }));
+        })();
         function getQueryParams() {
             const params = {};
             const search = window.location.search.substring(1);

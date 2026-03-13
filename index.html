@@ -579,13 +579,13 @@
         </div>
         <div id="gameView" class="hidden">
         <header class="game-header">
-            <a href="index.html" class="back-link" id="backToMenu">← 返回選單</a>
+            <a href="index.html" class="back-link" id="backToMenu">← 返回</a>
             <div class="title-banner">
                 <div class="title-banner-inner">聽音辨字</div>
             </div>
             <div class="header-right">
                 <span class="status-pill" id="scoreText">得分：0</span>
-                <span class="status-pill" id="progressText">第 0 / 0 題</span>
+                <span class="status-pill" id="progressText">0/0</span>
             </div>
         </header>
 
@@ -599,7 +599,7 @@
                 <span id="lessonLabel">第 1 課</span>
                 <button type="button" class="lesson-arrow" id="lessonNext" aria-label="下一課">→</button>
             </div>
-            <button type="button" class="mode-pill mode-btn" id="modeText">模式：圖片＋注音</button>
+            <button type="button" class="mode-pill mode-btn" id="modeText">圖片＋注音</button>
             <button class="btn btn-primary" id="playBtn">播放</button>
         </div>
 
@@ -742,7 +742,7 @@
         let currentEasyMode = (mode === 'easy');
         const modeTextEl = document.getElementById('modeText');
         function updateModeLabel() {
-            if (modeTextEl) modeTextEl.textContent = '模式：' + (currentEasyMode ? '圖片＋注音' : '全注音');
+            if (modeTextEl) modeTextEl.textContent = currentEasyMode ? '圖片＋注音' : '全注音';
         }
         updateModeLabel();
 
@@ -1076,7 +1076,7 @@
             const { correct, options } = makeQuestion(realIndex);
             gridEl.innerHTML = '';
             locked = false;
-            progressText.textContent = '第 ' + (currentIndex + 1) + ' / ' + questions.length + ' 題';
+            progressText.textContent = (currentIndex + 1) + '/' + questions.length;
             setMessage('', '');
             if (isFirstRender) {
                 isFirstRender = false;
@@ -1190,7 +1190,7 @@
             currentIndex = 0;
             score = 0;
             scoreText.textContent = '得分：0';
-            progressText.textContent = '第 1 / ' + questions.length + ' 題';
+            progressText.textContent = '1/' + questions.length;
             setMessage('', '');
             const overlay = document.getElementById('startOverlay');
             if (overlay) overlay.style.display = 'none';

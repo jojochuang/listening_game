@@ -43,6 +43,20 @@
             flex: 1;
             max-height: 100%;
         }
+        /* 手機直向時，取消外圈灰底與卡片陰影／圓角，讓遊戲佔滿整個畫面 */
+        @media (max-width: 480px), (max-height: 700px) and (orientation: portrait) {
+            body {
+                background: #ffffff;
+                padding: 0;
+                align-items: stretch;
+            }
+            .container {
+                max-width: none;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 8px 8px 0;
+            }
+        }
         header, .game-header {
             display: flex;
             align-items: center;

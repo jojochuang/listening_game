@@ -903,7 +903,6 @@
         }
 
         function playSound(name, shortenWrong) {
-            if (isIOS) return;
             const path = 'sounds/' + name + '.mp3';
             const a = new Audio(path);
             a.volume = 0.8;

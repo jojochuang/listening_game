@@ -289,6 +289,7 @@
             align-items: center;
         }
         .card {
+            position: relative;
             border-radius: clamp(12px, 3vmin, 20px);
             border: 3px solid #a5d6a7;
             padding: clamp(6px, 1.5vmin, 12px);
@@ -304,6 +305,18 @@
             width: 100%;
             transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background-color 0.15s;
         }
+        .card-number {
+            position: absolute;
+            top: 4px;
+            left: 6px;
+            font-size: 0.95em;
+            font-weight: bold;
+            opacity: 0.45;
+            color: #333;
+            pointer-events: none;
+        }
+        body.hide-card-numbers .card-number { display: none; }
+        body.night-mode .card-number { color: #fff; opacity: 0.4; }
         .card:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 14px rgba(76,175,80,0.3);
@@ -509,6 +522,66 @@
         body.night-mode .menu-row label { color: #bbb; }
         body.night-mode .menu-row select { background: #1a1a1a; color: #fff; border-color: #444; }
         body.night-mode .start-overlay span { background: #1a1a1a; color: #fff; }
+        /* 可收合工具列：小螢幕顯示於左下，隱藏時只顯示 >，展開顯示 < 與夜覽／編號 */
+        .tool-bar-outer {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 65;
+            padding-bottom: env(safe-area-inset-bottom);
+            align-items: flex-end;
+            gap: 0;
+        }
+        .tool-bar-outer .tool-bar-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid #ccc;
+            background: rgba(255,255,255,0.95);
+            font-size: 1rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .tool-bar-outer .tool-bar-panel {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-left: none;
+            border-radius: 8px 8px 0 0;
+            background: rgba(255,255,255,0.95);
+        }
+        .tool-bar-outer.collapsed .tool-bar-panel { display: none; }
+        .tool-bar-outer .night-toggle,
+        .tool-bar-outer .tool-bar-number-btn {
+            padding: 4px 10px;
+            font-size: 0.85em;
+            border-radius: 999px;
+            border: 1px solid #888;
+            background: #fff;
+            color: #333;
+            cursor: pointer;
+        }
+        .tool-bar-outer .tool-bar-number-btn { min-width: 4.5em; }
+        body.night-mode .tool-bar-outer .tool-bar-toggle,
+        body.night-mode .tool-bar-outer .tool-bar-panel {
+            background: rgba(30,30,30,0.95);
+            border-color: #555;
+            color: #ddd;
+        }
+        body.night-mode .tool-bar-outer .night-toggle,
+        body.night-mode .tool-bar-outer .tool-bar-number-btn {
+            background: #2a2a2a;
+            border-color: #666;
+            color: #ddd;
+        }
+        @media (max-width: 480px), (max-height: 700px) and (orientation: portrait) {
+            .tool-bar-outer { display: flex; bottom: 52px; }
+            body.game-page .game-header .night-toggle { display: none; }
+            body.menu-page .menu-view .night-toggle { display: none; }
+        }
         /* 選單頁：只顯示選單，全畫面 */
         body.menu-page #gameView {
             display: none !important;
@@ -671,23 +744,59 @@
         </div>
         </div>
     </div>
+    <div class="tool-bar-outer collapsed" id="toolBarOuter">
+        <button type="button" class="tool-bar-toggle" id="toolBarToggle" aria-label="開關工具列">&gt;</button>
+        <div class="tool-bar-panel">
+            <button type="button" class="night-toggle" id="nightToggleTool" title="夜覽模式">夜覽</button>
+            <button type="button" class="tool-bar-number-btn" id="showNumbersBtn">編號 ON</button>
+        </div>
+    </div>
 
     <script>
         (function initNightMode() {
             const key = 'listening_game_night';
-            const btns = [document.getElementById('nightToggle'), document.getElementById('nightToggleMenu')].filter(Boolean);
+            const btns = [document.getElementById('nightToggle'), document.getElementById('nightToggleMenu'), document.getElementById('nightToggleTool')].filter(Boolean);
             const active = localStorage.getItem(key) === '1';
             if (active) document.body.classList.add('night-mode');
             function updateLabels() {
                 const on = document.body.classList.contains('night-mode');
-                btns.forEach(b => { b.textContent = on ? '日間' : '夜覽'; });
+                btns.forEach(b => { if (b) b.textContent = on ? '日間' : '夜覽'; });
             }
             updateLabels();
-            btns.forEach(btn => btn.addEventListener('click', () => {
+            btns.forEach(btn => btn && btn.addEventListener('click', () => {
                 document.body.classList.toggle('night-mode');
                 localStorage.setItem(key, document.body.classList.contains('night-mode') ? '1' : '0');
                 updateLabels();
             }));
+        })();
+        (function initToolBar() {
+            const keyOpen = 'listening_game_toolbar_open';
+            const keyNumbers = 'listening_game_show_numbers';
+            const outer = document.getElementById('toolBarOuter');
+            const toggleBtn = document.getElementById('toolBarToggle');
+            const showNumbersBtn = document.getElementById('showNumbersBtn');
+            const showNumbers = localStorage.getItem(keyNumbers) !== '0';
+            if (!showNumbers) document.body.classList.add('hide-card-numbers');
+            function updateNumberLabel() {
+                const on = !document.body.classList.contains('hide-card-numbers');
+                if (showNumbersBtn) showNumbersBtn.textContent = on ? '編號 ON' : '編號 OFF';
+            }
+            updateNumberLabel();
+            if (toggleBtn && outer) {
+                const isOpen = localStorage.getItem(keyOpen) === '1';
+                if (isOpen) { outer.classList.remove('collapsed'); toggleBtn.textContent = '<'; }
+                toggleBtn.addEventListener('click', () => {
+                    const open = outer.classList.toggle('collapsed');
+                    toggleBtn.textContent = open ? '>' : '<';
+                    localStorage.setItem(keyOpen, open ? '0' : '1');
+                });
+            }
+            if (showNumbersBtn) showNumbersBtn.addEventListener('click', () => {
+                document.body.classList.toggle('hide-card-numbers');
+                const on = !document.body.classList.contains('hide-card-numbers');
+                localStorage.setItem(keyNumbers, on ? '1' : '0');
+                updateNumberLabel();
+            });
         })();
         function getQueryParams() {
             const params = {};
@@ -1169,6 +1278,12 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.dataset.correct = opt.isCorrect ? '1' : '0';
+
+                const numSpan = document.createElement('span');
+                numSpan.className = 'card-number';
+                numSpan.textContent = String(idx + 1);
+                numSpan.setAttribute('aria-hidden', 'true');
+                card.appendChild(numSpan);
 
                 const main = document.createElement('div');
                 main.className = 'card-main';

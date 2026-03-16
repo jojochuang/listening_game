@@ -934,13 +934,31 @@
             if (!('speechSynthesis' in window)) return;
             const clean = onlyHan(text) || text;
             if (!clean) return;
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(clean);
-            utter.lang = 'zh-TW';
-            const voice = pickTTSCVoice();
-            if (voice) utter.voice = voice;
-            utter.rate = 0.8;
-            window.speechSynthesis.speak(utter);
+            const syn = window.speechSynthesis;
+            syn.cancel();
+            if (typeof syn.resume === 'function') syn.resume();
+            setTimeout(() => {
+                if (!('speechSynthesis' in window)) return;
+                const utter = new SpeechSynthesisUtterance(clean);
+                utter.lang = 'zh-TW';
+                const voice = pickTTSCVoice();
+                if (voice) utter.voice = voice;
+                utter.rate = 0.8;
+                utter.onerror = () => {
+                    window.speechSynthesis.cancel();
+                    setTimeout(() => {
+                        try {
+                            const u2 = new SpeechSynthesisUtterance(clean);
+                            u2.lang = 'zh-TW';
+                            const v = pickTTSCVoice();
+                            if (v) u2.voice = v;
+                            u2.rate = 0.8;
+                            window.speechSynthesis.speak(u2);
+                        } catch (_) {}
+                    }, 200);
+                };
+                window.speechSynthesis.speak(utter);
+            }, 80);
         }
 
         const params = getQueryParams();

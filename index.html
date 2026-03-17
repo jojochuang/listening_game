@@ -1051,15 +1051,15 @@
             const startRow = lesson ? headerRow + 1 + (lesson - 1) * 25 : headerRow + 1;
             const endRow = lesson ? Math.min(headerRow + 1 + lesson * 25, rows.length) : rows.length;
 
-            if (headerRow >= 0 && questionCol >= 0) {
-                // 從標題的下一列開始抓（或依 lesson 只抓該課的 20 列）
+            if (headerRow >= 0) {
+                // 從標題的下一列開始抓（或依 lesson 只抓該課的 25 列）
                 for (let i = startRow; i < endRow; i++) {
                     const row = rows[i];
-                    if (!row || !row.length) continue;
-                    const wordCell = (row[questionCol] || '').trim();
+                    if (!row || row.length < 1) continue;
+                    const wordCell = (row[0] || '').trim();
                     if (!wordCell) continue;
-                    const img = (row[imageCol] || '').trim();
-                    const en = (row[questionCol + 1] || '').trim();
+                    const img = (row[1] || '').trim();
+                    const en = (row[2] || '').trim();
                     const han = onlyHan(wordCell);
                     items.push({
                         rawText: wordCell,
@@ -1072,16 +1072,16 @@
                 return items;
             }
 
-            // 退回到：第1列標題，第2欄(B)是題目、第3欄(C)是圖片
+            // 退回到：第1列標題，第1欄(A)是題目，第2欄(B)是圖片，第3欄(C)是英文
             const fbStart = lesson ? 1 + (lesson - 1) * 25 : 1;
             const fbEnd = lesson ? Math.min(1 + lesson * 25, rows.length) : rows.length;
             for (let i = fbStart; i < fbEnd; i++) {
                 const row = rows[i];
-                if (!row || row.length < 2) continue;
-                const raw = (row[1] || '').trim();
+                if (!row || row.length < 1) continue;
+                const raw = (row[0] || '').trim();
                 if (!raw) continue;
+                const img = (row[1] || '').trim();
                 const en = (row[2] || '').trim();
-                const img = (row[3] || '').trim();
                 const han = onlyHan(raw);
                 items.push({
                     rawText: raw,

@@ -725,6 +725,7 @@
                 <select id="menuMode">
                     <option value="easy">圖片＋注音</option>
                     <option value="hard">全注音</option>
+                    <option value="chinese">全中文</option>
                 </select>
             </div>
             <button type="button" class="night-toggle" id="nightToggleMenu" title="夜覽模式（黑底白字，減少藍光）">夜覽</button>
@@ -971,10 +972,11 @@
         const sheetId = params.sheet_id || '';
         const gid = params.gid || '0';
         const lessonParam = params.lesson ? parseInt(params.lesson, 10) : 0;
-        const mode = params.mode === 'hard' ? 'hard' : 'easy';
+        const modeParam = params.mode;
+        const mode = modeParam === 'hard' ? 'hard' : (modeParam === 'chinese' ? 'chinese' : 'easy');
         const staticMode = params.static === '1' || params.static === 'true';
         const staticBookIndex = params.book !== undefined && params.book !== '' ? parseInt(params.book, 10) : -1;
-        let displayMode = (mode === 'hard' ? 'hard' : 'easy'); // 'easy' | 'hard' | 'chinese'
+        let displayMode = mode; // 'easy' | 'hard' | 'chinese'
         const modeTextEl = document.getElementById('modeText');
         function updateModeLabel() {
             const labels = { easy: '圖片＋注音', hard: '全注音', chinese: '全中文' };

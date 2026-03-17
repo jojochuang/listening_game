@@ -398,6 +398,8 @@
             color: #444;
             text-align: center;
         }
+        .card-label-en { font-size: 1em; color: #555; }
+        body.night-mode .card-label-en { color: #aaa; }
         .card-number {
             position: absolute;
             top: 4px;
@@ -971,10 +973,37 @@
         const mode = params.mode === 'hard' ? 'hard' : 'easy';
         const staticMode = params.static === '1' || params.static === 'true';
         const staticBookIndex = params.book !== undefined && params.book !== '' ? parseInt(params.book, 10) : -1;
-        let currentEasyMode = (mode === 'easy');
+        let displayMode = (mode === 'hard' ? 'hard' : 'easy'); // 'easy' | 'hard' | 'chinese'
         const modeTextEl = document.getElementById('modeText');
+        const translateCache = new Map();
+        async function translateToEnglish(zhText) {
+            const key = (zhText || '').trim();
+            if (!key) return '';
+            if (translateCache.has(key)) return translateCache.get(key);
+            const apiUrl = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(key) + '&langpair=zh-TW|en';
+            const tryFetch = async (url) => {
+                const resp = await fetch(url);
+                if (!resp.ok) return null;
+                const data = await resp.json();
+                const en = (data.responseData && data.responseData.translatedText) || '';
+                return (en.trim() || key);
+            };
+            try {
+                let out = await tryFetch(apiUrl);
+                if (out === null) {
+                    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl);
+                    out = await tryFetch(proxyUrl);
+                }
+                if (out !== null) {
+                    translateCache.set(key, out);
+                    return out;
+                }
+            } catch (_) {}
+            return key;
+        }
         function updateModeLabel() {
-            if (modeTextEl) modeTextEl.textContent = currentEasyMode ? '圖片＋注音' : '全注音';
+            const labels = { easy: '圖片＋注音', hard: '全注音', chinese: '全中文' };
+            if (modeTextEl) modeTextEl.textContent = labels[displayMode] || '圖片＋注音';
         }
         updateModeLabel();
 
@@ -1339,7 +1368,7 @@
                 main.className = 'card-main';
 
                 const hasImgUrl = opt.imgUrl && String(opt.imgUrl).trim();
-                const showImg = currentEasyMode && hasImgUrl && !String(opt.qType || '').includes('全注音');
+                const showImg = (displayMode === 'easy') && hasImgUrl && !String(opt.qType || '').includes('全注音');
                 if (showImg) {
                     const img = document.createElement('img');
                     img.src = opt.imgUrl;
@@ -1349,15 +1378,20 @@
                 } else {
                     const zh = document.createElement('div');
                     zh.className = 'card-zhuyin';
-                    zh.innerHTML = escapeHtml(opt.rawText);
+                    zh.innerHTML = escapeHtml(displayMode === 'chinese' ? opt.word : opt.rawText);
                     main.appendChild(zh);
                 }
 
                 card.appendChild(main);
 
                 const label = document.createElement('div');
-                label.className = 'card-label';
-                label.textContent = opt.word;
+                label.className = 'card-label' + (displayMode === 'chinese' ? ' card-label-en' : '');
+                if (displayMode === 'chinese') {
+                    label.textContent = '…';
+                    translateToEnglish(opt.word).then(en => { label.textContent = en; });
+                } else {
+                    label.textContent = opt.word;
+                }
 
                 wrap.appendChild(card);
                 wrap.appendChild(label);
@@ -1408,7 +1442,7 @@
         if (modeTextEl) {
             modeTextEl.addEventListener('click', () => {
                 if (!questions.length) return;
-                currentEasyMode = !currentEasyMode;
+                displayMode = displayMode === 'easy' ? 'hard' : (displayMode === 'hard' ? 'chinese' : 'easy');
                 updateModeLabel();
                 renderQuestion();
             });

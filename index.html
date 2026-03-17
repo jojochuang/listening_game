@@ -401,8 +401,6 @@
             color: #444;
             text-align: center;
         }
-        .card-label-en { font-size: 1em; color: #555; }
-        body.night-mode .card-label-en { color: #aaa; }
         .card-number {
             position: absolute;
             top: 4px;
@@ -978,52 +976,6 @@
         const staticBookIndex = params.book !== undefined && params.book !== '' ? parseInt(params.book, 10) : -1;
         let displayMode = (mode === 'hard' ? 'hard' : 'easy'); // 'easy' | 'hard' | 'chinese'
         const modeTextEl = document.getElementById('modeText');
-        const translateCache = new Map();
-        async function translateToEnglish(zhText) {
-            const key = (zhText || '').trim();
-            if (!key) return '';
-            if (translateCache.has(key)) return translateCache.get(key);
-            let out = null;
-            try {
-                const libreResp = await fetch('https://libretranslate.com/translate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ q: key, source: 'zh', target: 'en', format: 'text' })
-                });
-                if (libreResp.ok) {
-                    const data = await libreResp.json();
-                    const en = (data.translatedText || '').trim();
-                    if (en) out = en;
-                }
-            } catch (_) {}
-            if (out === null) {
-                const mymemUrl = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(key) + '&langpair=zh-TW|en';
-                try {
-                    const resp = await fetch(mymemUrl);
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        const en = (data.responseData && data.responseData.translatedText || '').trim();
-                        if (en) out = en;
-                    }
-                } catch (_) {}
-                if (out === null) {
-                    try {
-                        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(mymemUrl);
-                        const pr = await fetch(proxyUrl);
-                        if (pr.ok) {
-                            const data = await pr.json();
-                            const en = (data.responseData && data.responseData.translatedText || '').trim();
-                            if (en) out = en;
-                        }
-                    } catch (_) {}
-                }
-            }
-            if (out) {
-                translateCache.set(key, out);
-                return out;
-            }
-            return key;
-        }
         function updateModeLabel() {
             const labels = { easy: '圖片＋注音', hard: '全注音', chinese: '全中文' };
             if (modeTextEl) modeTextEl.textContent = labels[displayMode] || '圖片＋注音';
@@ -1408,13 +1360,8 @@
                 card.appendChild(main);
 
                 const label = document.createElement('div');
-                label.className = 'card-label' + (displayMode === 'chinese' ? ' card-label-en' : '');
-                if (displayMode === 'chinese') {
-                    label.textContent = '…';
-                    translateToEnglish(opt.word).then(en => { label.textContent = en; });
-                } else {
-                    label.textContent = opt.word;
-                }
+                label.className = 'card-label';
+                label.textContent = opt.word;
 
                 wrap.appendChild(card);
                 wrap.appendChild(label);

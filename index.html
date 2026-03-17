@@ -1048,8 +1048,8 @@
                 }
             }
 
-            const startRow = lesson ? headerRow + 1 + (lesson - 1) * 20 : headerRow + 1;
-            const endRow = lesson ? Math.min(headerRow + 1 + lesson * 20, rows.length) : rows.length;
+            const startRow = lesson ? headerRow + 1 + (lesson - 1) * 25 : headerRow + 1;
+            const endRow = lesson ? Math.min(headerRow + 1 + lesson * 25, rows.length) : rows.length;
 
             if (headerRow >= 0 && questionCol >= 0) {
                 // 從標題的下一列開始抓（或依 lesson 只抓該課的 20 列）
@@ -1059,11 +1059,13 @@
                     const wordCell = (row[questionCol] || '').trim();
                     if (!wordCell) continue;
                     const img = (row[imageCol] || '').trim();
+                    const en = (row[questionCol + 1] || '').trim();
                     const han = onlyHan(wordCell);
                     items.push({
                         rawText: wordCell,
                         word: han || wordCell,
                         imgUrl: img,
+                        en: en,
                         qType: ''
                     });
                 }
@@ -1071,19 +1073,21 @@
             }
 
             // 退回到：第1列標題，第2欄(B)是題目、第3欄(C)是圖片
-            const fbStart = lesson ? 1 + (lesson - 1) * 20 : 1;
-            const fbEnd = lesson ? Math.min(1 + lesson * 20, rows.length) : rows.length;
+            const fbStart = lesson ? 1 + (lesson - 1) * 25 : 1;
+            const fbEnd = lesson ? Math.min(1 + lesson * 25, rows.length) : rows.length;
             for (let i = fbStart; i < fbEnd; i++) {
                 const row = rows[i];
                 if (!row || row.length < 2) continue;
                 const raw = (row[1] || '').trim();
                 if (!raw) continue;
-                const img = (row[2] || '').trim();
+                const en = (row[2] || '').trim();
+                const img = (row[3] || '').trim();
                 const han = onlyHan(raw);
                 items.push({
                     rawText: raw,
                     word: han || raw,
                     imgUrl: img,
+                    en: en,
                     qType: ''
                 });
             }
@@ -1186,7 +1190,7 @@
                                 try {
                                     const rows = await fetchCsvFromUrl(staticBooks[i].csv);
                                     const dataCount = rows.length - 1;
-                                    const n = Math.max(1, Math.ceil(dataCount / 20));
+                                    const n = Math.max(1, Math.ceil(dataCount / 25));
                                     lessonSelect.innerHTML = Array.from({ length: n }, (_, k) => '<option value="' + (k + 1) + '">第 ' + (k + 1) + ' 課</option>').join('');
                                 } catch (e) {
                                     lessonSelect.innerHTML = '<option value="">載入失敗</option>';
@@ -1244,7 +1248,7 @@
                             if (row && row.length && (row[0] || '').trim()) dataCount++;
                         }
                         const rowsForLessons = Math.max(dataCount, sheetRows.length - 1);
-                        const numLessons = Math.max(1, Math.ceil(rowsForLessons / 20));
+                        const numLessons = Math.max(1, Math.ceil(rowsForLessons / 25));
                         lessonSelect.innerHTML = Array.from({ length: numLessons }, (_, i) => '<option value="' + (i + 1) + '">第 ' + (i + 1) + ' 課</option>').join('');
                     } catch (e) {
                         lessonSelect.innerHTML = '<option value="">載入失敗</option>';
@@ -1361,7 +1365,12 @@
 
                 const label = document.createElement('div');
                 label.className = 'card-label';
-                label.textContent = opt.word;
+                if (displayMode === 'chinese') {
+                    label.textContent = opt.en || '';
+                    if (!opt.en) label.style.visibility = 'hidden';
+                } else {
+                    label.textContent = opt.word;
+                }
 
                 wrap.appendChild(card);
                 wrap.appendChild(label);
@@ -1478,7 +1487,7 @@
                     const rows = await fetchCsvFromUrl(list[staticBookIndex].csv);
                     if (!rows.length) { setMessage('CSV 是空的。', 'error'); return; }
                     sheetRows = rows;
-                    numLessons = Math.max(1, Math.ceil((rows.length - 1) / 20));
+                    numLessons = Math.max(1, Math.ceil((rows.length - 1) / 25));
                     currentLesson = lessonParam && lessonParam >= 1 && lessonParam <= numLessons ? lessonParam : 1;
                     questions = buildQuestionPool(rows, currentLesson);
                     if (!questions.length) { setMessage('沒有找到任何題目。', 'error'); return; }
@@ -1521,7 +1530,7 @@
                     return;
                 }
                 sheetRows = rows;
-                numLessons = Math.max(1, Math.ceil((rows.length - 1) / 20));
+                numLessons = Math.max(1, Math.ceil((rows.length - 1) / 25));
                 currentLesson = lessonParam && lessonParam >= 1 && lessonParam <= numLessons ? lessonParam : 1;
                 questions = buildQuestionPool(rows, currentLesson);
                 if (!questions.length) {

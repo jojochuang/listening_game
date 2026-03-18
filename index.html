@@ -412,6 +412,7 @@
             pointer-events: none;
         }
         body.hide-card-numbers .card-number { display: none; }
+        body.labels-hidden .card-label { display: none !important; }
         body.night-mode .card-number { color: #fff; opacity: 0.4; }
         .game-controls-bottom,
         .bottom-bar {
@@ -755,6 +756,7 @@
                 <button type="button" class="lesson-arrow" id="lessonNext" aria-label="下一課">→</button>
             </div>
             <button type="button" class="mode-pill mode-btn" id="modeText">圖片＋注音</button>
+            <button type="button" class="btn btn-secondary" id="toggleLabelsBtn" style="display:none;" title="切換綠框下方提示文字">隱藏提示</button>
             <button class="btn btn-primary" id="playBtn">播放</button>
         </div>
 
@@ -981,6 +983,16 @@
         function updateModeLabel() {
             const labels = { easy: '圖片＋注音', hard: '全注音', chinese: '全中文' };
             if (modeTextEl) modeTextEl.textContent = labels[displayMode] || '圖片＋注音';
+            const toggleBtn = document.getElementById('toggleLabelsBtn');
+            if (toggleBtn) {
+                const showToggle = (displayMode === 'hard' || displayMode === 'chinese');
+                toggleBtn.style.display = showToggle ? '' : 'none';
+                if (!showToggle) {
+                    document.body.classList.remove('labels-hidden');
+                } else {
+                    toggleBtn.textContent = document.body.classList.contains('labels-hidden') ? '顯示提示' : '隱藏提示';
+                }
+            }
         }
         updateModeLabel();
 
@@ -1424,6 +1436,13 @@
                 displayMode = displayMode === 'easy' ? 'hard' : (displayMode === 'hard' ? 'chinese' : 'easy');
                 updateModeLabel();
                 renderQuestion();
+            });
+        }
+        const toggleLabelsBtn = document.getElementById('toggleLabelsBtn');
+        if (toggleLabelsBtn) {
+            toggleLabelsBtn.addEventListener('click', () => {
+                document.body.classList.toggle('labels-hidden');
+                toggleLabelsBtn.textContent = document.body.classList.contains('labels-hidden') ? '顯示提示' : '隱藏提示';
             });
         }
 

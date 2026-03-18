@@ -43,7 +43,21 @@
             flex: 1;
             max-height: 100%;
         }
-        header {
+        /* 手機直向時，取消外圈灰底與卡片陰影／圓角，讓遊戲佔滿整個畫面 */
+        @media (max-width: 480px), (max-height: 700px) and (orientation: portrait) {
+            body {
+                background: #ffffff;
+                padding: 0;
+                align-items: stretch;
+            }
+            .container {
+                max-width: none;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 8px 8px 0;
+            }
+        }
+        header, .game-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -51,15 +65,28 @@
             flex-wrap: wrap;
             gap: 8px;
             flex-shrink: 0;
-            position: relative;
         }
-        .title-banner {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
+        .game-header .back-link {
+            flex-shrink: 0;
+        }
+        .game-header .title-banner {
+            flex: 1;
             display: flex;
             justify-content: center;
-            pointer-events: none;
+            min-width: 0;
+        }
+        .game-header .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9em;
+            flex-wrap: wrap;
         }
         .title-banner-inner {
             background: linear-gradient(135deg, #ffb74d 0%, #ff9800 100%);
@@ -126,6 +153,107 @@
             flex: 1;
             min-height: 0;
         }
+        /* 小螢幕手機（如 iPhone SE）：標題列固定上緣、控制列固定底、可滑動、綠框有最小高度 */
+        @media (max-width: 480px), (max-height: 700px) and (orientation: portrait) {
+            body.game-page #gameView {
+                display: flex !important;
+                flex-direction: column;
+                min-height: 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                flex: 1;
+                padding-top: 40px;
+                padding-bottom: 52px;
+            }
+            body.game-page #gameView .game-header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 60;
+                margin: 0;
+                padding: 6px 10px;
+                padding-top: max(6px, env(safe-area-inset-top));
+                background: #f0f4ff;
+                box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+            }
+            body.game-page #gameView .game-header .back-link {
+                padding: 4px 8px;
+                font-size: 0.85em;
+            }
+            body.game-page #gameView .game-header .title-banner-inner {
+                font-size: 1.1em;
+                padding: 4px 16px;
+            }
+            body.game-page #gameView .game-header .header-right .status-pill {
+                padding: 3px 6px;
+                font-size: 0.8em;
+            }
+            body.game-page #gameView .game-controls-bottom {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 61;
+                margin: 0;
+                padding: 6px 10px;
+                padding-bottom: max(6px, env(safe-area-inset-bottom));
+                background: #fff;
+                box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 6px;
+            }
+            body.game-page #gameView .game-controls-bottom .lesson-switcher {
+                gap: 2px;
+            }
+            body.game-page #gameView .game-controls-bottom .mode-pill {
+                padding: 4px 8px;
+                font-size: 0.85em;
+            }
+            body.game-page #gameView .grid {
+                flex: 1;
+                min-height: 0;
+                grid-auto-rows: minmax(112px, 1fr);
+                margin-top: 2px;
+            }
+            body.game-page #gameView .card {
+                min-height: 92px;
+                padding: 3px 5px;
+            }
+            body.game-page #gameView .card-main {
+                padding: 2px;
+                flex: 1;
+                min-height: 0;
+            }
+            body.game-page #gameView .card-main img {
+                max-height: 100%;
+                min-height: 50%;
+            }
+            body.game-page #gameView .card-zhuyin {
+                font-size: clamp(34px, 12vmin, 72px);
+                line-height: 1.05;
+            }
+            body.game-page #gameView .card-label,
+            body.game-page #gameView .card-number {
+                font-size: 0.95em;
+                margin-top: 4px;
+            }
+            body.game-page #gameView .lesson-arrow {
+                width: 28px;
+                height: 28px;
+                font-size: 1em;
+            }
+            body.game-page #gameView #lessonLabel {
+                font-size: 0.9em;
+            }
+            body.game-page #gameView .btn {
+                padding: 6px 14px;
+                font-size: 0.9em;
+                min-width: 80px;
+            }
+        }
         @media (max-width: 800px) {
             .grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -141,7 +269,7 @@
             .card-wrap .card { flex: 1; min-height: 0; }
             .card-zhuyin { font-size: clamp(36px, 10vmin, 72px); line-height: 1.05; letter-spacing: -0.03em; }
             .card-label { font-size: 1.2em; margin-top: 2px; flex-shrink: 0; }
-            .bottom-bar { margin-top: 4px; gap: 8px; flex-shrink: 0; }
+            .game-controls-bottom, .bottom-bar { margin-top: 4px; gap: 8px; flex-shrink: 0; }
             .btn { padding: 6px 14px; font-size: 0.9em; min-width: 90px; }
         }
         @media (orientation: landscape) and (max-height: 500px) {
@@ -153,7 +281,7 @@
             .card-wrap { min-height: 0; }
             .card-zhuyin { font-size: clamp(28px, 8vmin, 56px); line-height: 1.05; letter-spacing: -0.03em; }
             .card-label { font-size: 1em; margin-top: 2px; flex-shrink: 0; }
-            .bottom-bar { margin-top: 2px; gap: 6px; flex-shrink: 0; }
+            .game-controls-bottom, .bottom-bar { margin-top: 2px; gap: 6px; flex-shrink: 0; }
             .btn { padding: 4px 10px; font-size: 0.85em; min-width: 70px; }
         }
         .card-wrap {
@@ -162,6 +290,7 @@
             align-items: center;
         }
         .card {
+            position: relative;
             border-radius: clamp(12px, 3vmin, 20px);
             border: 3px solid #a5d6a7;
             padding: clamp(6px, 1.5vmin, 12px);
@@ -177,6 +306,18 @@
             width: 100%;
             transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background-color 0.15s;
         }
+        .card-number {
+            position: absolute;
+            top: 4px;
+            left: 6px;
+            font-size: 1.8em;
+            font-weight: bold;
+            opacity: 0.45;
+            color: #333;
+            pointer-events: none;
+        }
+        body.hide-card-numbers .card-number { display: none; }
+        body.night-mode .card-number { color: #fff; opacity: 0.4; }
         .card:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 14px rgba(76,175,80,0.3);
@@ -239,6 +380,10 @@
             object-fit: contain;
             object-position: center;
             border-radius: 8px;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            pointer-events: none;
         }
         .card-zhuyin {
             font-family: 'BpmfZhuyin', 'BpmfZihiOnly', 'BpmfZihiKaiStd', 'Microsoft JhengHei', '微軟正黑體', sans-serif;
@@ -247,19 +392,70 @@
             line-height: 1.15;
             letter-spacing: -0.02em;
         }
+        .card-main-han {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif;
+        }
         .card-label {
             margin-top: 8px;
             font-size: 1.8em;
             color: #444;
             text-align: center;
         }
+        .card-number {
+            position: absolute;
+            top: 4px;
+            left: 6px;
+            font-size: 1.8em;
+            font-weight: bold;
+            opacity: 0.45;
+            color: #333;
+            pointer-events: none;
+        }
+        body.hide-card-numbers .card-number { display: none; }
+        body.night-mode .card-number { color: #fff; opacity: 0.4; }
+        .game-controls-bottom,
         .bottom-bar {
             margin-top: 10px;
             flex-shrink: 0;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
             gap: 12px;
             flex-wrap: wrap;
+        }
+        .lesson-switcher {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .lesson-arrow {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #42a5f5;
+            background: #e3f2fd;
+            color: #1565c0;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+        }
+        .lesson-arrow:hover {
+            background: #42a5f5;
+            color: white;
+        }
+        .lesson-arrow:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        #lessonLabel {
+            font-size: 1em;
+            color: #333;
+            min-width: 4em;
+            text-align: center;
         }
         .btn {
             padding: 10px 20px;
@@ -304,6 +500,107 @@
         }
         .hidden {
             display: none;
+        }
+        .night-toggle {
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid #888;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        .night-toggle:hover { background: #eee; }
+        body.night-mode .night-toggle {
+            background: rgba(40,40,40,0.9);
+            color: #ddd;
+            border-color: #666;
+        }
+        body.night-mode .night-toggle:hover { background: #333; }
+        /* 夜覽模式：黑底白字，減少藍光 */
+        body.night-mode { background: #0d0d0d !important; }
+        body.night-mode .container { background: #0d0d0d !important; }
+        body.night-mode .game-header,
+        body.night-mode .game-controls-bottom { background: #0d0d0d !important; }
+        body.night-mode .game-header { box-shadow: 0 1px 0 rgba(255,255,255,0.1); }
+        body.night-mode .game-controls-bottom { box-shadow: 0 -2px 12px rgba(255,255,255,0.1); }
+        body.night-mode .back-link { color: #90caf9; background: #1a1a2e; }
+        body.night-mode .status-pill { color: #90caf9; background: #1a1a2e; }
+        body.night-mode .card { background: #1a1a1a; border-color: #2d5a2d; }
+        body.night-mode .card.correct { background: #0d2b0d; border-color: #2d7a2d; }
+        body.night-mode .card.wrong { background: #2b0d0d; border-color: #7a2d2d; }
+        body.night-mode .card-main { background: transparent; }
+        body.night-mode .card-zhuyin { color: #fff; }
+        body.night-mode .card-label { color: #fff; }
+        body.night-mode #lessonLabel { color: #ddd; }
+        body.night-mode .lesson-arrow { background: #1a1a2e; color: #90caf9; border-color: #42a5f5; }
+        body.night-mode .lesson-arrow:hover { background: #42a5f5; color: #fff; }
+        body.night-mode .message { color: #aaa; }
+        body.night-mode .message.info { color: #90caf9; }
+        body.night-mode .mode-pill { background: #2d1a4e; color: #ce93d8; }
+        body.night-mode .menu-view h2 { color: #eee; }
+        body.night-mode .menu-row label { color: #bbb; }
+        body.night-mode .menu-row select { background: #1a1a1a; color: #fff; border-color: #444; }
+        body.night-mode .start-overlay span { background: #1a1a1a; color: #fff; }
+        /* 可收合工具列：小螢幕顯示於左下，隱藏時只顯示 >，展開顯示 < 與夜覽／編號 */
+        .tool-bar-outer {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 65;
+            padding-bottom: env(safe-area-inset-bottom);
+            align-items: flex-end;
+            gap: 0;
+        }
+        .tool-bar-outer .tool-bar-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid #ccc;
+            background: rgba(255,255,255,0.95);
+            font-size: 1rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .tool-bar-outer .tool-bar-panel {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-left: none;
+            border-radius: 8px 8px 0 0;
+            background: rgba(255,255,255,0.95);
+        }
+        .tool-bar-outer.collapsed .tool-bar-panel { display: none; }
+        .tool-bar-outer .night-toggle,
+        .tool-bar-outer .tool-bar-number-btn {
+            padding: 4px 10px;
+            font-size: 0.85em;
+            border-radius: 999px;
+            border: 1px solid #888;
+            background: #fff;
+            color: #333;
+            cursor: pointer;
+        }
+        .tool-bar-outer .tool-bar-number-btn { min-width: 4.5em; }
+        body.night-mode .tool-bar-outer .tool-bar-toggle,
+        body.night-mode .tool-bar-outer .tool-bar-panel {
+            background: rgba(30,30,30,0.95);
+            border-color: #555;
+            color: #ddd;
+        }
+        body.night-mode .tool-bar-outer .night-toggle,
+        body.night-mode .tool-bar-outer .tool-bar-number-btn {
+            background: #2a2a2a;
+            border-color: #666;
+            color: #ddd;
+        }
+        @media (max-width: 480px), (max-height: 700px) and (orientation: portrait) {
+            .tool-bar-outer { display: flex; bottom: 52px; }
+            body.game-page .game-header .night-toggle { display: none; }
+            body.menu-page .menu-view .night-toggle { display: none; }
         }
         /* 選單頁：只顯示選單，全畫面 */
         body.menu-page #gameView {
@@ -414,6 +711,7 @@
     <div class="container">
         <div id="menuView" class="menu-view hidden">
             <h2>關卡選單</h2>
+            <div id="menuError" class="message error" style="display:none; margin-bottom:8px;"></div>
             <div class="menu-row">
                 <label>課本</label>
                 <select id="menuBook"></select>
@@ -427,22 +725,22 @@
                 <select id="menuMode">
                     <option value="easy">圖片＋注音</option>
                     <option value="hard">全注音</option>
+                    <option value="chinese">全中文</option>
                 </select>
             </div>
+            <button type="button" class="night-toggle" id="nightToggleMenu" title="夜覽模式（黑底白字，減少藍光）">夜覽</button>
             <button type="button" class="btn btn-primary" id="menuStart">開始遊戲</button>
         </div>
         <div id="gameView" class="hidden">
-        <header>
-            <div class="status-bar">
-                <a href="" class="back-link" id="backToMenu">← 返回選單</a>
-                <span class="status-pill" id="scoreText">得分：0</span>
-                <span class="status-pill" id="progressText">第 0 / 0 題</span>
-            </div>
+        <header class="game-header">
+            <a href="index.html" class="back-link" id="backToMenu">← 返回</a>
             <div class="title-banner">
                 <div class="title-banner-inner">聽音辨字</div>
             </div>
-            <div class="status-bar">
-                <button type="button" class="mode-pill mode-btn" id="modeText">模式：圖片＋注音</button>
+            <div class="header-right">
+                <button type="button" class="night-toggle" id="nightToggle" title="夜覽模式（黑底白字，減少藍光）">夜覽</button>
+                <span class="status-pill" id="scoreText">得分：0</span>
+                <span class="status-pill" id="progressText">0/0</span>
             </div>
         </header>
 
@@ -450,7 +748,13 @@
             <!-- 卡片由 JS 動態產生 -->
         </div>
 
-        <div class="bottom-bar">
+        <div class="game-controls-bottom">
+            <div class="lesson-switcher">
+                <button type="button" class="lesson-arrow" id="lessonPrev" aria-label="上一課">←</button>
+                <span id="lessonLabel">第 1 課</span>
+                <button type="button" class="lesson-arrow" id="lessonNext" aria-label="下一課">→</button>
+            </div>
+            <button type="button" class="mode-pill mode-btn" id="modeText">圖片＋注音</button>
             <button class="btn btn-primary" id="playBtn">播放</button>
         </div>
 
@@ -461,8 +765,60 @@
         </div>
         </div>
     </div>
+    <div class="tool-bar-outer collapsed" id="toolBarOuter">
+        <button type="button" class="tool-bar-toggle" id="toolBarToggle" aria-label="開關工具列">&gt;</button>
+        <div class="tool-bar-panel">
+            <button type="button" class="night-toggle" id="nightToggleTool" title="夜覽模式">夜覽</button>
+            <button type="button" class="tool-bar-number-btn" id="showNumbersBtn">編號 ON</button>
+        </div>
+    </div>
 
     <script>
+        (function initNightMode() {
+            const key = 'listening_game_night';
+            const btns = [document.getElementById('nightToggle'), document.getElementById('nightToggleMenu'), document.getElementById('nightToggleTool')].filter(Boolean);
+            const active = localStorage.getItem(key) === '1';
+            if (active) document.body.classList.add('night-mode');
+            function updateLabels() {
+                const on = document.body.classList.contains('night-mode');
+                btns.forEach(b => { if (b) b.textContent = on ? '日間' : '夜覽'; });
+            }
+            updateLabels();
+            btns.forEach(btn => btn && btn.addEventListener('click', () => {
+                document.body.classList.toggle('night-mode');
+                localStorage.setItem(key, document.body.classList.contains('night-mode') ? '1' : '0');
+                updateLabels();
+            }));
+        })();
+        (function initToolBar() {
+            const keyOpen = 'listening_game_toolbar_open';
+            const keyNumbers = 'listening_game_show_numbers';
+            const outer = document.getElementById('toolBarOuter');
+            const toggleBtn = document.getElementById('toolBarToggle');
+            const showNumbersBtn = document.getElementById('showNumbersBtn');
+            const showNumbers = localStorage.getItem(keyNumbers) !== '0';
+            if (!showNumbers) document.body.classList.add('hide-card-numbers');
+            function updateNumberLabel() {
+                const on = !document.body.classList.contains('hide-card-numbers');
+                if (showNumbersBtn) showNumbersBtn.textContent = on ? '編號 ON' : '編號 OFF';
+            }
+            updateNumberLabel();
+            if (toggleBtn && outer) {
+                const isOpen = localStorage.getItem(keyOpen) === '1';
+                if (isOpen) { outer.classList.remove('collapsed'); toggleBtn.textContent = '<'; }
+                toggleBtn.addEventListener('click', () => {
+                    const open = outer.classList.toggle('collapsed');
+                    toggleBtn.textContent = open ? '>' : '<';
+                    localStorage.setItem(keyOpen, open ? '0' : '1');
+                });
+            }
+            if (showNumbersBtn) showNumbersBtn.addEventListener('click', () => {
+                document.body.classList.toggle('hide-card-numbers');
+                const on = !document.body.classList.contains('hide-card-numbers');
+                localStorage.setItem(keyNumbers, on ? '1' : '0');
+                updateNumberLabel();
+            });
+        })();
         function getQueryParams() {
             const params = {};
             const search = window.location.search.substring(1);
@@ -515,28 +871,42 @@
             return rows;
         }
 
+        // 嘗試減少圖片被直接下載：關閉右鍵選單與拖曳
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        });
+
         function pickTTSCVoice() {
+            if (!('speechSynthesis' in window)) return null;
             const voices = window.speechSynthesis.getVoices();
             if (!voices || !voices.length) return null;
-            let best = null;
-            for (const v of voices) {
-                const name = (v.name || '').toLowerCase();
-                const lang = (v.lang || '').toLowerCase();
-                if (lang.startsWith('zh-tw')) {
-                    if (!best) best = v;
-                    if (name.includes('mei') || name.includes('jia') || name.includes('meijia')) {
-                        return v;
-                    }
-                }
+
+            const lower = s => (s || '').toLowerCase();
+
+            // 1. 優先 zh-TW，並盡量選到「美佳 / Meijia」
+            const zhTwVoices = voices.filter(v => lower(v.lang).startsWith('zh-tw'));
+            if (zhTwVoices.length) {
+                let preferred = zhTwVoices.find(v => v.name.includes('美佳') || lower(v.name).includes('meijia'));
+                if (!preferred) preferred = zhTwVoices[0];
+                return preferred;
             }
-            for (const v of voices) {
-                if ((v.lang || '').toLowerCase().startsWith('zh')) return v;
-            }
-            return best || voices[0];
+
+            // 2. 沒有 zh-TW，就選任一個中文語音（zh-*)
+            const zhVoices = voices.filter(v => lower(v.lang).startsWith('zh'));
+            if (zhVoices.length) return zhVoices[0];
+
+            // 3. 最後備援：用第一個可用聲音
+            return voices[0];
         }
 
         function playSound(name, shortenWrong) {
-            if (isIOS) return;
             const path = 'sounds/' + name + '.mp3';
             const a = new Audio(path);
             a.volume = 0.8;
@@ -568,25 +938,49 @@
             if (!('speechSynthesis' in window)) return;
             const clean = onlyHan(text) || text;
             if (!clean) return;
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(clean);
-            utter.lang = 'zh-TW';
-            const voice = pickTTSCVoice();
-            if (voice) utter.voice = voice;
-            utter.rate = 0.9;
-            window.speechSynthesis.speak(utter);
+            const syn = window.speechSynthesis;
+            syn.cancel();
+            if (typeof syn.resume === 'function') syn.resume();
+            setTimeout(() => {
+                if (!('speechSynthesis' in window)) return;
+                const utter = new SpeechSynthesisUtterance(clean);
+                utter.lang = 'zh-TW';
+                const voice = pickTTSCVoice();
+                if (voice) utter.voice = voice;
+                utter.rate = 0.8;
+                utter.onerror = () => {
+                    window.speechSynthesis.cancel();
+                    setTimeout(() => {
+                        try {
+                            const u2 = new SpeechSynthesisUtterance(clean);
+                            u2.lang = 'zh-TW';
+                            const v = pickTTSCVoice();
+                            if (v) u2.voice = v;
+                            u2.rate = 0.8;
+                            window.speechSynthesis.speak(u2);
+                        } catch (_) {}
+                    }, 200);
+                };
+                window.speechSynthesis.speak(utter);
+            }, 80);
         }
 
         const params = getQueryParams();
         const DEFAULT_MENU_SHEET = '1264gdkuMnIn2k5L5KM69yumBfJFdYVhxzzsC-2R5Q2U';
+        /** 若公開代理皆失敗，可改用 Google Apps Script 代理：部署後取得網址，用 ?proxy=網址 開啟遊戲 */
+        const GAS_PROXY_URL = (params.proxy || '').trim().replace(/\/+$/, '');
         const sheetId = params.sheet_id || '';
         const gid = params.gid || '0';
         const lessonParam = params.lesson ? parseInt(params.lesson, 10) : 0;
-        const mode = params.mode === 'hard' ? 'hard' : 'easy';
-        let currentEasyMode = (mode === 'easy');
+        const modeParam = params.mode;
+        const mode = modeParam === 'hard' ? 'hard' : (modeParam === 'chinese' ? 'chinese' : 'easy');
+        const staticMode = params.static === '1' || params.static === 'true';
+        const staticBookIndex = params.book !== undefined && params.book !== '' ? parseInt(params.book, 10) : -1;
+        let displayMode = mode; // 'easy' | 'hard' | 'chinese'
         const modeTextEl = document.getElementById('modeText');
         function updateModeLabel() {
-            if (modeTextEl) modeTextEl.textContent = '模式：' + (currentEasyMode ? '圖片＋注音' : '全注音');
+            const labels = { easy: '圖片＋注音', hard: '全注音', chinese: '全中文' };
+            if (modeTextEl) modeTextEl.textContent = labels[displayMode] || '圖片＋注音';
         }
         updateModeLabel();
 
@@ -602,6 +996,10 @@
         let questionOrder = [];
         let currentIndex = 0;
         let score = 0;
+        let sheetRows = [];
+        let numLessons = 1;
+        let currentLesson = 1;
+        let staticBooks = [];
         let locked = false;
         let isFirstRender = true;
 
@@ -652,42 +1050,46 @@
                 }
             }
 
-            const startRow = lesson ? headerRow + 1 + (lesson - 1) * 20 : headerRow + 1;
-            const endRow = lesson ? Math.min(headerRow + 1 + lesson * 20, rows.length) : rows.length;
+            const startRow = lesson ? headerRow + 1 + (lesson - 1) * 25 : headerRow + 1;
+            const endRow = lesson ? Math.min(headerRow + 1 + lesson * 25, rows.length) : rows.length;
 
-            if (headerRow >= 0 && questionCol >= 0) {
-                // 從標題的下一列開始抓（或依 lesson 只抓該課的 20 列）
+            if (headerRow >= 0) {
+                // 從標題的下一列開始抓（或依 lesson 只抓該課的 25 列）
                 for (let i = startRow; i < endRow; i++) {
                     const row = rows[i];
-                    if (!row || !row.length) continue;
-                    const wordCell = (row[questionCol] || '').trim();
+                    if (!row || row.length < 1) continue;
+                    const wordCell = (row[0] || '').trim();
                     if (!wordCell) continue;
-                    const img = (row[imageCol] || '').trim();
+                    const img = (row[1] || '').trim();
+                    const en = (row[2] || '').trim();
                     const han = onlyHan(wordCell);
                     items.push({
                         rawText: wordCell,
                         word: han || wordCell,
                         imgUrl: img,
+                        en: en,
                         qType: ''
                     });
                 }
                 return items;
             }
 
-            // 退回到：第1列標題，第2欄(B)是題目、第3欄(C)是圖片
-            const fbStart = lesson ? 1 + (lesson - 1) * 20 : 1;
-            const fbEnd = lesson ? Math.min(1 + lesson * 20, rows.length) : rows.length;
+            // 退回到：第1列標題，第1欄(A)是題目，第2欄(B)是圖片，第3欄(C)是英文
+            const fbStart = lesson ? 1 + (lesson - 1) * 25 : 1;
+            const fbEnd = lesson ? Math.min(1 + lesson * 25, rows.length) : rows.length;
             for (let i = fbStart; i < fbEnd; i++) {
                 const row = rows[i];
-                if (!row || row.length < 2) continue;
-                const raw = (row[1] || '').trim();
+                if (!row || row.length < 1) continue;
+                const raw = (row[0] || '').trim();
                 if (!raw) continue;
-                const img = (row[2] || '').trim();
+                const img = (row[1] || '').trim();
+                const en = (row[2] || '').trim();
                 const han = onlyHan(raw);
                 items.push({
                     rawText: raw,
                     word: han || raw,
                     imgUrl: img,
+                    en: en,
                     qType: ''
                 });
             }
@@ -713,21 +1115,45 @@
             return true;
         }
 
-        function getSheetCsvUrl(sid, gidVal) {
+        function getSheetCsvUrl(sid, gidVal, proxyIndex) {
             const googleUrl = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sid) + '/export?format=csv&gid=' + encodeURIComponent(gidVal);
-            if (useCorsProxy()) {
-                return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl);
+            if (!useCorsProxy()) {
+                const base = getSheetBase();
+                return { url: base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal), raw: true };
             }
-            const base = getSheetBase();
-            return base + '/api/sheet_csv?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal);
+            if (GAS_PROXY_URL && proxyIndex === 0) {
+                return { url: GAS_PROXY_URL + '?sheet_id=' + encodeURIComponent(sid) + '&gid=' + encodeURIComponent(gidVal), raw: true };
+            }
+            const proxies = [
+                { url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(googleUrl), raw: true },
+                { url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(googleUrl), raw: false },
+                { url: 'https://corsproxy.io/?url=' + encodeURIComponent(googleUrl), raw: true }
+            ];
+            const idx = GAS_PROXY_URL ? proxyIndex - 1 : proxyIndex;
+            return proxies[idx >= 0 ? idx : 0] || proxies[0];
+        }
+
+        function looksLikeCsv(text) {
+            const t = (text || '').trim();
+            return t.length > 0 && !t.startsWith('<') && !t.startsWith('{') && !t.startsWith('<!');
+        }
+
+        async function fetchCsvFromUrl(url) {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const text = await resp.text();
+            if (!looksLikeCsv(text)) throw new Error('無效的 CSV');
+            return parseCSV(text);
         }
 
         async function fetchSheetCsv(sid, gidVal) {
-            const url = getSheetCsvUrl(sid, gidVal);
+            const gid = gidVal || '0';
+            const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sid)}/export?format=csv&gid=${encodeURIComponent(gid)}`;
             const resp = await fetch(url);
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const csv = await resp.text();
-            return parseCSV(csv);
+            const text = await resp.text();
+            if (!looksLikeCsv(text)) throw new Error('試算表未開放檢視');
+            return parseCSV(text);
         }
 
         async function initMenu() {
@@ -739,6 +1165,58 @@
             const lessonSelect = document.getElementById('menuLesson');
             const startBtn = document.getElementById('menuStart');
             if (!bookSelect || !lessonSelect || !startBtn) return;
+            const menuError = document.getElementById('menuError');
+            if (menuError) { menuError.style.display = 'none'; menuError.textContent = ''; }
+            // 若網址帶有 static=1，則使用 books.json + GitHub CSV；否則預設使用 Google 試算表
+            if (staticMode) {
+                if (bookSelect) bookSelect.innerHTML = '<option value="">載入中…</option>';
+                try {
+                    const booksJsonResp = await fetch('books.json');
+                    if (booksJsonResp.ok) {
+                        const list = await booksJsonResp.json();
+                        if (Array.isArray(list) && list.length > 0 && list[0].name && list[0].csv) {
+                            staticBooks = list;
+                            bookSelect.innerHTML = '<option value="">請選擇課本</option>' + staticBooks.map((b, i) => '<option value="' + i + '">' + escapeHtml(b.name) + '</option>').join('');
+                            lessonSelect.innerHTML = '<option value="">請選擇課</option>';
+                            bookSelect.addEventListener('change', async () => {
+                                const idx = bookSelect.value;
+                                lessonSelect.innerHTML = '<option value="">載入中…</option>';
+                                if (idx === '' || idx === undefined) {
+                                    lessonSelect.innerHTML = '<option value="">請先選課本</option>';
+                                    return;
+                                }
+                                const i = parseInt(idx, 10);
+                                if (i < 0 || i >= staticBooks.length) return;
+                                const errEl = document.getElementById('menuError');
+                                if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+                                try {
+                                    const rows = await fetchCsvFromUrl(staticBooks[i].csv);
+                                    const dataCount = rows.length - 1;
+                                    const n = Math.max(1, Math.ceil(dataCount / 25));
+                                    lessonSelect.innerHTML = Array.from({ length: n }, (_, k) => '<option value="' + (k + 1) + '">第 ' + (k + 1) + ' 課</option>').join('');
+                                } catch (e) {
+                                    lessonSelect.innerHTML = '<option value="">載入失敗</option>';
+                                    if (errEl) { errEl.style.display = 'block'; errEl.textContent = '載入失敗：' + e.message; errEl.className = 'message error'; }
+                                }
+                            });
+                            startBtn.addEventListener('click', () => {
+                                const idx = bookSelect.value;
+                                const lessonVal = lessonSelect.value;
+                                if (idx === '' || !lessonVal) return;
+                                const modeVal = document.getElementById('menuMode').value;
+                                const q = new URLSearchParams({ static: '1', book: idx, lesson: lessonVal, mode: modeVal });
+                                const path = window.location.pathname || '';
+                                const page = path ? path.split('/').pop() || 'index.html' : 'index.html';
+                                window.location.href = page + '?' + q.toString();
+                            });
+                            return;
+                        }
+                    }
+                } catch (_) {}
+            }
+            staticBooks = [];
+            if (bookSelect) bookSelect.innerHTML = '<option value="">載入中… 若較慢請稍候（約 30–60 秒）</option>';
+            if (bookSelect) bookSelect.innerHTML = '<option value="">載入中… 若較慢請稍候（約 30–60 秒）</option>';
             try {
                 const rows = await fetchSheetCsv(DEFAULT_MENU_SHEET, '0');
                 const books = [];
@@ -757,11 +1235,13 @@
 
                 bookSelect.addEventListener('change', async () => {
                     const gidVal = bookSelect.value;
-                    lessonSelect.innerHTML = '<option value="">載入中…</option>';
+                    lessonSelect.innerHTML = '<option value="">載入中… 若較慢請稍候</option>';
                     if (!gidVal) {
                         lessonSelect.innerHTML = '<option value="">請先選課本</option>';
                         return;
                     }
+                    const errEl = document.getElementById('menuError');
+                    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
                     try {
                         const sheetRows = await fetchSheetCsv(DEFAULT_MENU_SHEET, gidVal);
                         let dataCount = 0;
@@ -770,10 +1250,15 @@
                             if (row && row.length && (row[0] || '').trim()) dataCount++;
                         }
                         const rowsForLessons = Math.max(dataCount, sheetRows.length - 1);
-                        const numLessons = Math.max(1, Math.ceil(rowsForLessons / 20));
+                        const numLessons = Math.max(1, Math.ceil(rowsForLessons / 25));
                         lessonSelect.innerHTML = Array.from({ length: numLessons }, (_, i) => '<option value="' + (i + 1) + '">第 ' + (i + 1) + ' 課</option>').join('');
                     } catch (e) {
                         lessonSelect.innerHTML = '<option value="">載入失敗</option>';
+                        if (errEl) {
+                            errEl.style.display = 'block';
+                            errEl.textContent = '載入課次失敗：' + e.message + '（請確認試算表已設為「知道連結的任何人可檢視」）';
+                            errEl.className = 'message error';
+                        }
                     }
                 });
 
@@ -794,10 +1279,23 @@
                 });
             } catch (e) {
                 console.error(e);
-                if (messageEl) {
-                    messageEl.textContent = '無法載入關卡選單：' + e.message;
-                    messageEl.className = 'message error';
+                const menuError = document.getElementById('menuError');
+                if (menuError) {
+                    menuError.style.display = 'block';
+                    let msg = '無法載入關卡選單：' + e.message;
+                    if (useCorsProxy() && !GAS_PROXY_URL) {
+                        msg += ' 若始終無法載入可參考 repo 內 GOOGLE_APPS_SCRIPT_PROXY.md 自建代理（選用）。';
+                    } else {
+                        msg += '（請確認試算表已設為「知道連結的任何人可檢視」）';
+                    }
+                    msg += ' ';
+                    menuError.innerHTML = msg + '<button type="button" class="btn btn-secondary" style="margin-left:8px;padding:6px 14px;" id="menuRetryBtn">再試一次</button>';
+                    menuError.className = 'message error';
+                    const retryBtn = document.getElementById('menuRetryBtn');
+                    if (retryBtn) retryBtn.addEventListener('click', () => { window.location.reload(); });
                 }
+                if (bookSelect) bookSelect.innerHTML = '<option value="">載入失敗，請重新整理</option>';
+                if (lessonSelect) lessonSelect.innerHTML = '<option value="">請先選課本</option>';
             }
         }
 
@@ -824,7 +1322,7 @@
             const { correct, options } = makeQuestion(realIndex);
             gridEl.innerHTML = '';
             locked = false;
-            progressText.textContent = '第 ' + (currentIndex + 1) + ' / ' + questions.length + ' 題';
+            progressText.textContent = (currentIndex + 1) + '/' + questions.length;
             setMessage('', '');
             if (isFirstRender) {
                 isFirstRender = false;
@@ -841,11 +1339,17 @@
                 card.className = 'card';
                 card.dataset.correct = opt.isCorrect ? '1' : '0';
 
+                const numSpan = document.createElement('span');
+                numSpan.className = 'card-number';
+                numSpan.textContent = String(idx + 1);
+                numSpan.setAttribute('aria-hidden', 'true');
+                card.appendChild(numSpan);
+
                 const main = document.createElement('div');
                 main.className = 'card-main';
 
                 const hasImgUrl = opt.imgUrl && String(opt.imgUrl).trim();
-                const showImg = currentEasyMode && hasImgUrl && !String(opt.qType || '').includes('全注音');
+                const showImg = (displayMode === 'easy') && hasImgUrl && !String(opt.qType || '').includes('全注音');
                 if (showImg) {
                     const img = document.createElement('img');
                     img.src = opt.imgUrl;
@@ -854,8 +1358,8 @@
                     main.appendChild(img);
                 } else {
                     const zh = document.createElement('div');
-                    zh.className = 'card-zhuyin';
-                    zh.innerHTML = escapeHtml(opt.rawText);
+                    zh.className = 'card-zhuyin' + (displayMode === 'chinese' ? ' card-main-han' : '');
+                    zh.innerHTML = escapeHtml(displayMode === 'chinese' ? opt.word : opt.rawText);
                     main.appendChild(zh);
                 }
 
@@ -863,7 +1367,12 @@
 
                 const label = document.createElement('div');
                 label.className = 'card-label';
-                label.textContent = opt.word;
+                if (displayMode === 'chinese') {
+                    label.textContent = opt.en || '';
+                    if (!opt.en) label.style.visibility = 'hidden';
+                } else {
+                    label.textContent = opt.word;
+                }
 
                 wrap.appendChild(card);
                 wrap.appendChild(label);
@@ -914,13 +1423,99 @@
         if (modeTextEl) {
             modeTextEl.addEventListener('click', () => {
                 if (!questions.length) return;
-                currentEasyMode = !currentEasyMode;
+                displayMode = displayMode === 'easy' ? 'hard' : (displayMode === 'hard' ? 'chinese' : 'easy');
                 updateModeLabel();
                 renderQuestion();
             });
         }
 
+        function updateLessonUI() {
+            const label = document.getElementById('lessonLabel');
+            const prevBtn = document.getElementById('lessonPrev');
+            const nextBtn = document.getElementById('lessonNext');
+            if (label) label.textContent = '第 ' + currentLesson + ' 課';
+            if (prevBtn) prevBtn.disabled = currentLesson <= 1;
+            if (nextBtn) nextBtn.disabled = currentLesson >= numLessons;
+        }
+
+        function applyLesson(lesson) {
+            if (!sheetRows.length || lesson < 1 || lesson > numLessons) return;
+            currentLesson = lesson;
+            questions = buildQuestionPool(sheetRows, currentLesson);
+            if (!questions.length) return;
+            questionOrder = shuffle(questions.map((_, i) => i));
+            currentIndex = 0;
+            score = 0;
+            scoreText.textContent = '得分：0';
+            progressText.textContent = '1/' + questions.length;
+            setMessage('', '');
+            const overlay = document.getElementById('startOverlay');
+            if (overlay) overlay.style.display = 'none';
+            updateLessonUI();
+            renderQuestion();
+            if (window.history && window.history.replaceState) {
+                const q = new URLSearchParams(window.location.search);
+                q.set('lesson', String(currentLesson));
+                if (staticMode && staticBookIndex >= 0) {
+                    q.set('static', '1');
+                    q.set('book', String(staticBookIndex));
+                }
+                window.history.replaceState(null, '', (window.location.pathname || 'index.html') + '?' + q.toString());
+            }
+        }
+
+        function goPrevLesson() {
+            if (currentLesson <= 1) return;
+            applyLesson(currentLesson - 1);
+        }
+
+        function goNextLesson() {
+            if (currentLesson >= numLessons) return;
+            applyLesson(currentLesson + 1);
+        }
+
         async function init() {
+            if (staticMode && staticBookIndex >= 0) {
+                document.body.classList.remove('menu-page');
+                document.body.classList.add('game-page');
+                if (menuView) menuView.classList.add('hidden');
+                if (gameView) gameView.classList.remove('hidden');
+                setMessage('正在載入題目…', 'info');
+                try {
+                    const booksResp = await fetch('books.json');
+                    if (!booksResp.ok) throw new Error('找不到 books.json');
+                    const list = await booksResp.json();
+                    if (!Array.isArray(list) || staticBookIndex >= list.length || !list[staticBookIndex].csv) throw new Error('課本設定錯誤');
+                    const rows = await fetchCsvFromUrl(list[staticBookIndex].csv);
+                    if (!rows.length) { setMessage('CSV 是空的。', 'error'); return; }
+                    sheetRows = rows;
+                    numLessons = Math.max(1, Math.ceil((rows.length - 1) / 25));
+                    currentLesson = lessonParam && lessonParam >= 1 && lessonParam <= numLessons ? lessonParam : 1;
+                    questions = buildQuestionPool(rows, currentLesson);
+                    if (!questions.length) { setMessage('沒有找到任何題目。', 'error'); return; }
+                    questionOrder = shuffle(questions.map((_, i) => i));
+                    currentIndex = 0;
+                    score = 0;
+                    scoreText.textContent = '得分：0';
+                    updateLessonUI();
+                    renderQuestion();
+                    setMessage('載入完成', 'info');
+                    document.getElementById('lessonPrev').addEventListener('click', goPrevLesson);
+                    document.getElementById('lessonNext').addEventListener('click', goNextLesson);
+                    document.getElementById('startOverlay').addEventListener('click', () => {
+                        document.getElementById('startOverlay').style.display = 'none';
+                        const ri = questionOrder[currentIndex];
+                        if (questions[ri]) speakAfterUnlock(questions[ri].rawText);
+                    });
+                } catch (e) {
+                    console.error(e);
+                    setMessage('載入題目時發生錯誤：' + (e && e.message ? e.message : e), 'error');
+                }
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.onvoiceschanged = () => pickTTSCVoice();
+                }
+                return;
+            }
             if (!sheetId) {
                 initMenu();
                 return;
@@ -929,21 +1524,17 @@
             document.body.classList.add('game-page');
             if (menuView) menuView.classList.add('hidden');
             if (gameView) gameView.classList.remove('hidden');
-            const url = getSheetCsvUrl(sheetId, gid);
-            setMessage('正在載入題目…', 'info');
+            setMessage('正在載入題目… 若較慢請稍候（約 30–60 秒）', 'info');
             try {
-                const resp = await fetch(url);
-                if (!resp.ok) {
-                    setMessage('載入試算表失敗：HTTP ' + resp.status, 'error');
-                    return;
-                }
-                const csv = await resp.text();
-                const rows = parseCSV(csv);
+                const rows = await fetchSheetCsv(sheetId, gid);
                 if (!rows.length) {
                     setMessage('試算表是空的或格式不正確。', 'error');
                     return;
                 }
-                questions = buildQuestionPool(rows, lessonParam || 0);
+                sheetRows = rows;
+                numLessons = Math.max(1, Math.ceil((rows.length - 1) / 25));
+                currentLesson = lessonParam && lessonParam >= 1 && lessonParam <= numLessons ? lessonParam : 1;
+                questions = buildQuestionPool(rows, currentLesson);
                 if (!questions.length) {
                     setMessage('沒有找到任何題目（請確認第2欄「題目」有內容）。', 'error');
                     return;
@@ -952,8 +1543,11 @@
                 currentIndex = 0;
                 score = 0;
                 scoreText.textContent = '得分：0';
+                updateLessonUI();
                 renderQuestion();
                 setMessage('載入完成', 'info');
+                document.getElementById('lessonPrev').addEventListener('click', goPrevLesson);
+                document.getElementById('lessonNext').addEventListener('click', goNextLesson);
                 document.getElementById('startOverlay').addEventListener('click', () => {
                     document.getElementById('startOverlay').style.display = 'none';
                     const ri = questionOrder[currentIndex];
@@ -961,7 +1555,7 @@
                 });
             } catch (e) {
                 console.error(e);
-                setMessage('載入題目時發生錯誤：' + e, 'error');
+                setMessage('載入題目時發生錯誤：' + (e && e.message ? e.message : e), 'error');
             }
 
             if ('speechSynthesis' in window) {

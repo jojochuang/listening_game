@@ -1222,10 +1222,8 @@
                 const books = [];
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
-                    const nameD = (row[3] || '').trim();
-                    const urlE = (row[4] || '').trim();
-                    const name = nameD || (row[2] || '').trim();
-                    const url = urlE || (row[3] || '').trim();
+                    const name = (row[0] || '').trim();
+                    const url = (row[1] || '').trim();
                     if (!name) continue;
                     const gidVal = extractGidFromUrl(url) || '0';
                     books.push({ name, gid: gidVal });
@@ -1535,7 +1533,7 @@
                 currentLesson = lessonParam && lessonParam >= 1 && lessonParam <= numLessons ? lessonParam : 1;
                 questions = buildQuestionPool(rows, currentLesson);
                 if (!questions.length) {
-                    setMessage('沒有找到任何題目（請確認第2欄「題目」有內容）。', 'error');
+                    setMessage('沒有找到任何題目（請確認A欄「題目」有內容）。', 'error');
                     return;
                 }
                 questionOrder = shuffle(questions.map((_, i) => i));

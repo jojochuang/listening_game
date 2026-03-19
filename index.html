@@ -1014,6 +1014,7 @@
         let staticBooks = [];
         let locked = false;
         let isFirstRender = true;
+        let lessonCompleted = false;
 
         function setMessage(text, kind) {
             messageEl.textContent = text || '';
@@ -1329,6 +1330,7 @@
 
         function renderQuestion() {
             if (!questions.length) return;
+            if (lessonCompleted) return;
             const realIndex = questionOrder[currentIndex];
             const { correct, options } = makeQuestion(realIndex);
             gridEl.innerHTML = '';
@@ -1390,21 +1392,31 @@
                 card.addEventListener('click', () => {
                     if (locked) return;
                     if (opt.isCorrect) {
+                        const isLastQuestion = (currentIndex >= questions.length - 1);
                         locked = true;
                         card.classList.add('correct');
                         score += 1;
                         scoreText.textContent = '得分：' + score;
-                        setMessage('答對了！', 'success');
                         playSound('correct', false);
-                        const banner = document.getElementById('successBanner');
-                        if (banner) {
-                            banner.classList.add('show');
-                            setTimeout(() => {
-                                banner.classList.remove('show');
-                                goToNextQuestion();
-                            }, 1000);
+                        if (isLastQuestion) {
+                            lessonCompleted = true;
+                            progressText.textContent = questions.length + '/' + questions.length;
+                            setMessage('You did it!', 'success');
+                            const banner = document.getElementById('successBanner');
+                            if (banner) banner.classList.add('show');
+                            // 停在最後一題，直到使用者按其他按鈕（例如換課、切模式、播放等）
                         } else {
-                            setTimeout(() => goToNextQuestion(), 1000);
+                            setMessage('答對了！', 'success');
+                            const banner = document.getElementById('successBanner');
+                            if (banner) {
+                                banner.classList.add('show');
+                                setTimeout(() => {
+                                    banner.classList.remove('show');
+                                    goToNextQuestion();
+                                }, 1000);
+                            } else {
+                                setTimeout(() => goToNextQuestion(), 1000);
+                            }
                         }
                     } else {
                         card.classList.add('wrong');
@@ -1419,7 +1431,17 @@
 
         function goToNextQuestion() {
             if (!questions.length) return;
-            currentIndex = (currentIndex + 1) % questions.length;
+            if (lessonCompleted) return;
+            const next = currentIndex + 1;
+            if (next >= questions.length) {
+                lessonCompleted = true;
+                progressText.textContent = questions.length + '/' + questions.length;
+                setMessage('You did it!', 'success');
+                const banner = document.getElementById('successBanner');
+                if (banner) banner.classList.add('show');
+                return;
+            }
+            currentIndex = next;
             renderQuestion();
         }
 
@@ -1462,12 +1484,15 @@
             if (!questions.length) return;
             questionOrder = shuffle(questions.map((_, i) => i));
             currentIndex = 0;
+            lessonCompleted = false;
             score = 0;
             scoreText.textContent = '得分：0';
             progressText.textContent = '1/' + questions.length;
             setMessage('', '');
             const overlay = document.getElementById('startOverlay');
             if (overlay) overlay.style.display = 'none';
+            const banner = document.getElementById('successBanner');
+            if (banner) banner.classList.remove('show');
             updateLessonUI();
             renderQuestion();
             if (window.history && window.history.replaceState) {
@@ -1512,9 +1537,12 @@
                     if (!questions.length) { setMessage('沒有找到任何題目。', 'error'); return; }
                     questionOrder = shuffle(questions.map((_, i) => i));
                     currentIndex = 0;
+                    lessonCompleted = false;
                     score = 0;
                     scoreText.textContent = '得分：0';
                     updateLessonUI();
+                    const banner = document.getElementById('successBanner');
+                    if (banner) banner.classList.remove('show');
                     renderQuestion();
                     setMessage('載入完成', 'info');
                     document.getElementById('lessonPrev').addEventListener('click', goPrevLesson);
@@ -1558,9 +1586,12 @@
                 }
                 questionOrder = shuffle(questions.map((_, i) => i));
                 currentIndex = 0;
+                lessonCompleted = false;
                 score = 0;
                 scoreText.textContent = '得分：0';
                 updateLessonUI();
+                const banner = document.getElementById('successBanner');
+                if (banner) banner.classList.remove('show');
                 renderQuestion();
                 setMessage('載入完成', 'info');
                 document.getElementById('lessonPrev').addEventListener('click', goPrevLesson);

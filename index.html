@@ -1477,7 +1477,20 @@
 
         function goToNextQuestion() {
             if (!questions.length) return;
-            currentIndex = (currentIndex + 1) % questions.length;
+            // 最後一題答對後：停在完成畫面，不要自動回到第一題
+            if (currentIndex >= questions.length - 1) {
+                locked = true;
+                progressText.textContent = questions.length + '/' + questions.length;
+                setMessage('You did it!', 'success');
+                const overlay = document.getElementById('startOverlay');
+                if (overlay) {
+                    const span = overlay.querySelector('span');
+                    if (span) span.textContent = 'You did it!';
+                    overlay.style.display = 'flex';
+                }
+                return;
+            }
+            currentIndex = currentIndex + 1;
             renderQuestion();
         }
 

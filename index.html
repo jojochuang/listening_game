@@ -627,11 +627,14 @@
         }
         .menu-view {
             width: 100%;
-            max-width: 480px;
+            max-width: 520px;
             padding: 24px 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
+            max-height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .menu-view h2 {
             text-align: center;
@@ -658,6 +661,176 @@
         }
         .menu-view .btn {
             margin-top: 12px;
+        }
+        .menu-btn-custom {
+            margin-top: 0 !important;
+        }
+        /* 自製遊戲內容對話框 */
+        .custom-sheet-dialog {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .custom-sheet-dialog.hidden {
+            display: none;
+        }
+        .custom-sheet-dialog-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+        }
+        .custom-sheet-dialog-panel {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            max-height: min(90vh, 640px);
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+            -webkit-overflow-scrolling: touch;
+        }
+        .custom-sheet-dialog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .custom-sheet-dialog-header h3 {
+            margin: 0;
+            font-size: 1.15em;
+            color: #333;
+        }
+        .custom-sheet-dialog-close {
+            border: none;
+            background: #eee;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.4em;
+            line-height: 1;
+            cursor: pointer;
+            color: #555;
+        }
+        .custom-sheet-dialog-close:hover {
+            background: #ddd;
+        }
+        .custom-sheet-dialog-body {
+            padding: 16px;
+            font-size: 0.9em;
+            color: #444;
+            line-height: 1.55;
+        }
+        .custom-sheet-dialog-body p {
+            margin: 0 0 10px;
+        }
+        .custom-sheet-dialog-body ol {
+            margin: 0 0 14px 1.2rem;
+            padding: 0;
+        }
+        .custom-sheet-dialog-body li {
+            margin-bottom: 8px;
+        }
+        .custom-sheet-dialog-body a {
+            color: #1565c0;
+            word-break: break-all;
+        }
+        .custom-sheet-dialog-body textarea {
+            width: 100%;
+            min-height: 76px;
+            margin: 8px 0 12px;
+            padding: 10px 12px;
+            font-size: 0.95em;
+            border: 2px solid #90caf9;
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .custom-sheet-dialog-lesson {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .custom-sheet-dialog-lesson input {
+            max-width: 100px;
+            padding: 8px 12px;
+            font-size: 1em;
+            border: 2px solid #a5d6a7;
+            border-radius: 12px;
+        }
+        .custom-sheet-dialog-hint {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .custom-sheet-dialog-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .custom-sheet-result-box {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed #bdbdbd;
+            display: none;
+        }
+        .custom-sheet-result-box.show {
+            display: block;
+        }
+        .custom-sheet-result-box label {
+            display: block;
+            font-size: 0.88em;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .custom-sheet-result-url {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 0.75em;
+            border: 2px solid #81c784;
+            border-radius: 10px;
+            background: #f1f8e9;
+            color: #1b5e20;
+            box-sizing: border-box;
+            word-break: break-all;
+        }
+        body.night-mode .custom-sheet-dialog-panel {
+            background: #1e1e1e;
+            border: 1px solid #444;
+        }
+        body.night-mode .custom-sheet-dialog-header {
+            border-bottom-color: #444;
+        }
+        body.night-mode .custom-sheet-dialog-header h3 {
+            color: #eee;
+        }
+        body.night-mode .custom-sheet-dialog-body,
+        body.night-mode .custom-sheet-dialog-body p,
+        body.night-mode .custom-sheet-dialog-body li {
+            color: #ccc;
+        }
+        body.night-mode .custom-sheet-dialog-body a {
+            color: #90caf9;
+        }
+        body.night-mode .custom-sheet-dialog-body textarea {
+            background: #2a2a2a;
+            color: #eee;
+            border-color: #42a5f5;
+        }
+        body.night-mode .custom-sheet-result-url {
+            background: #1a2e1a;
+            color: #a5d6a7;
+            border-color: #4caf50;
         }
         .start-overlay {
             position: fixed;
@@ -729,6 +902,7 @@
                     <option value="chinese">全中文</option>
                 </select>
             </div>
+            <button type="button" class="btn btn-secondary menu-btn-custom" id="btnOpenCustomSheetDialog">自製遊戲內容</button>
             <button type="button" class="night-toggle" id="nightToggleMenu" title="夜覽模式（黑底白字，減少藍光）">夜覽</button>
             <button type="button" class="btn btn-primary" id="menuStart">開始遊戲</button>
         </div>
@@ -767,6 +941,46 @@
         </div>
         </div>
     </div>
+
+    <div id="customSheetDialog" class="custom-sheet-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="customSheetDialogTitle">
+        <div class="custom-sheet-dialog-backdrop" id="customSheetDialogBackdrop"></div>
+        <div class="custom-sheet-dialog-panel">
+            <div class="custom-sheet-dialog-header">
+                <h3 id="customSheetDialogTitle">自製遊戲內容</h3>
+                <button type="button" class="custom-sheet-dialog-close" id="customSheetDialogClose" aria-label="關閉">×</button>
+            </div>
+            <div class="custom-sheet-dialog-body">
+                <p><strong>聽音辨字的試算表範本</strong>（請先開啟後建立副本再編輯）：</p>
+                <p><a href="https://docs.google.com/spreadsheets/d/1Lx1GF2YiNLHscirg-l8nfqkUKDiKEUiBoTNqLHmWBeY/edit?gid=497677583#gid=497677583" target="_blank" rel="noopener noreferrer">開啟 Google 試算表範本</a></p>
+                <ol>
+                    <li>在範本中按「檔案 → 建立副本」，複製到自己的雲端硬碟。</li>
+                    <li>依試算表內說明，在指定欄位填入語詞、圖片網址、英文翻譯等。</li>
+                    <li>按「共用」，將一般存取權設為<strong>知道連結的任何人可檢視</strong>。</li>
+                    <li>複製瀏覽器網址列的完整網址，貼在下方，按「生成專屬遊戲網址」。</li>
+                </ol>
+                <label for="customSheetPasteUrl"><strong>貼上你的試算表網址</strong></label>
+                <textarea id="customSheetPasteUrl" placeholder="https://docs.google.com/spreadsheets/d/…" autocomplete="off" spellcheck="false"></textarea>
+                <div class="custom-sheet-dialog-lesson">
+                    <label for="customSheetLessonInput">從第幾課開始</label>
+                    <input type="number" id="customSheetLessonInput" min="1" value="1" />
+                </div>
+                <p class="custom-sheet-dialog-hint">顯示模式會使用選單頁面上方的「模式」（圖片＋注音／全注音／全中文）。若網址中沒有 gid，會使用第一個工作表。</p>
+                <div class="custom-sheet-dialog-actions">
+                    <button type="button" class="btn btn-primary" id="customSheetGenBtn">生成專屬遊戲網址</button>
+                </div>
+                <div id="customSheetGenErr" class="message error" style="display:none;margin-top:10px;text-align:left;"></div>
+                <div id="customSheetResultBox" class="custom-sheet-result-box">
+                    <label for="customSheetResultUrl">專屬遊戲網址</label>
+                    <input type="text" id="customSheetResultUrl" class="custom-sheet-result-url" readonly />
+                    <div class="custom-sheet-dialog-actions" style="margin-top:10px;">
+                        <button type="button" class="btn btn-secondary" id="customSheetCopyBtn">Copy 網址</button>
+                        <button type="button" class="btn btn-primary" id="customSheetOpenBtn">開啟遊戲</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="tool-bar-outer collapsed" id="toolBarOuter">
         <button type="button" class="tool-bar-toggle" id="toolBarToggle" aria-label="開關工具列">&gt;</button>
         <div class="tool-bar-panel">
@@ -1163,6 +1377,144 @@
             if (!url || typeof url !== 'string') return '0';
             const m = url.match(/[?&#]gid=(\d+)/i);
             return m ? m[1] : '0';
+        }
+
+        function extractSheetIdFromPaste(text) {
+            const t = (text || '').trim();
+            const m = t.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/i);
+            return m ? m[1] : '';
+        }
+
+        function buildCustomGameUrl(sheetIdVal, gidVal, lessonNum, modeVal, proxyVal) {
+            const q = new URLSearchParams();
+            q.set('sheet_id', sheetIdVal);
+            q.set('gid', gidVal || '0');
+            q.set('lesson', String(lessonNum));
+            q.set('mode', modeVal || 'easy');
+            if (proxyVal) q.set('proxy', proxyVal);
+            const u = new URL(window.location.href);
+            u.search = '';
+            u.hash = '';
+            if (u.pathname.endsWith('/')) u.pathname += 'index.html';
+            u.search = q.toString();
+            return u.toString();
+        }
+
+        function initCustomSheetDialog() {
+            const dialog = document.getElementById('customSheetDialog');
+            const openBtn = document.getElementById('btnOpenCustomSheetDialog');
+            const closeBtn = document.getElementById('customSheetDialogClose');
+            const backdrop = document.getElementById('customSheetDialogBackdrop');
+            const pasteEl = document.getElementById('customSheetPasteUrl');
+            const lessonEl = document.getElementById('customSheetLessonInput');
+            const genBtn = document.getElementById('customSheetGenBtn');
+            const errEl = document.getElementById('customSheetGenErr');
+            const resultBox = document.getElementById('customSheetResultBox');
+            const resultUrlEl = document.getElementById('customSheetResultUrl');
+            const copyBtn = document.getElementById('customSheetCopyBtn');
+            const openGameBtn = document.getElementById('customSheetOpenBtn');
+            const menuMode = document.getElementById('menuMode');
+            if (!dialog || !openBtn) return;
+
+            function showDialog(show) {
+                if (show) {
+                    dialog.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    if (pasteEl) pasteEl.focus();
+                } else {
+                    dialog.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            }
+
+            function hideErr() {
+                if (errEl) {
+                    errEl.style.display = 'none';
+                    errEl.textContent = '';
+                }
+            }
+            function showErr(msg) {
+                if (errEl) {
+                    errEl.style.display = 'block';
+                    errEl.textContent = msg;
+                }
+                if (resultBox) {
+                    resultBox.classList.remove('show');
+                }
+            }
+
+            openBtn.addEventListener('click', function () {
+                hideErr();
+                if (resultBox) resultBox.classList.remove('show');
+                showDialog(true);
+            });
+            closeBtn && closeBtn.addEventListener('click', function () { showDialog(false); });
+            backdrop && backdrop.addEventListener('click', function () { showDialog(false); });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && dialog && !dialog.classList.contains('hidden')) {
+                    showDialog(false);
+                }
+            });
+
+            genBtn && genBtn.addEventListener('click', function () {
+                hideErr();
+                const raw = (pasteEl && pasteEl.value ? pasteEl.value : '').trim();
+                if (!raw) {
+                    showErr('請貼上試算表網址。');
+                    return;
+                }
+                const sid = extractSheetIdFromPaste(raw);
+                if (!sid) {
+                    showErr('無法辨識試算表。請貼上 Google 試算表連結（網址中需有 /spreadsheets/d/…）。');
+                    return;
+                }
+                const gidParsed = extractGidFromUrl(raw) || '0';
+                let lessonNum = parseInt(lessonEl && lessonEl.value ? lessonEl.value : '1', 10);
+                if (isNaN(lessonNum) || lessonNum < 1) lessonNum = 1;
+                const modeVal = (menuMode && menuMode.value) ? menuMode.value : 'easy';
+                const proxyKeep = GAS_PROXY_URL ? GAS_PROXY_URL : '';
+                const url = buildCustomGameUrl(sid, gidParsed, lessonNum, modeVal, proxyKeep);
+                if (resultUrlEl) resultUrlEl.value = url;
+                if (resultBox) resultBox.classList.add('show');
+            });
+
+            function copyText(text, onDone) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(onDone).catch(function () {
+                        execCopyFallback(text, onDone);
+                    });
+                } else {
+                    execCopyFallback(text, onDone);
+                }
+            }
+            function execCopyFallback(text, onDone) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', '');
+                ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                } catch (e) {}
+                document.body.removeChild(ta);
+                if (onDone) onDone();
+            }
+
+            copyBtn && copyBtn.addEventListener('click', function () {
+                const t = (resultUrlEl && resultUrlEl.value ? resultUrlEl.value : '').trim();
+                if (!t) return;
+                const label = copyBtn.textContent;
+                copyText(t, function () {
+                    copyBtn.textContent = '已複製';
+                    setTimeout(function () { copyBtn.textContent = label; }, 2000);
+                });
+            });
+
+            openGameBtn && openGameBtn.addEventListener('click', function () {
+                const t = (resultUrlEl && resultUrlEl.value ? resultUrlEl.value : '').trim();
+                if (t) window.location.href = t;
+            });
         }
 
         function getSheetBase() {
@@ -1665,6 +2017,7 @@
             }
             window.addEventListener('resize', setHeight);
         })();
+        initCustomSheetDialog();
         init();
     </script>
 </body>

@@ -10,7 +10,7 @@
 
 1. 在 repo 設定中啟用 **GitHub Pages**（Source: main branch）。
 2. 開啟：**https://\<你的帳號\>.github.io/listening_game/**  
-   （首頁即為遊戲，無須再加檔名。）
+   （首頁即為遊戲，無須再加檔名。教學入口與另一項工具見 [中文備課工具](https://jojochuang.github.io/)）
 3. 選課本、課次與模式後即可遊玩。試算表需設為「知道連結的任何人可檢視」。
 
 ### 方式二：本機伺服器

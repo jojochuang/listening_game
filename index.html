@@ -69,6 +69,20 @@
         .game-header .back-link {
             flex-shrink: 0;
         }
+        .header-back-links {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .header-back-links .back-link {
+            font-size: 0.9em;
+            padding: 2px 8px;
+        }
+        .menu-portal-link {
+            margin-bottom: 10px;
+        }
         .game-header .title-banner {
             flex: 1;
             display: flex;
@@ -884,6 +898,9 @@
 <body>
     <div class="container">
         <div id="menuView" class="menu-view hidden">
+            <div class="menu-portal-link">
+                <a href="https://jojochuang.github.io/" class="back-link" rel="noopener noreferrer">← 中文備課工具</a>
+            </div>
             <h2>關卡選單</h2>
             <div id="menuError" class="message error" style="display:none; margin-bottom:8px;"></div>
             <div class="menu-row">
@@ -908,7 +925,10 @@
         </div>
         <div id="gameView" class="hidden">
         <header class="game-header">
-            <a href="index.html" class="back-link" id="backToMenu">← 返回</a>
+            <div class="header-back-links">
+                <a href="https://jojochuang.github.io/" class="back-link" rel="noopener noreferrer">← 備課工具</a>
+                <a href="index.html" class="back-link" id="backToMenu">← 返回選單</a>
+            </div>
             <div class="title-banner">
                 <div class="title-banner-inner">聽音辨字</div>
             </div>

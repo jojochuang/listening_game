@@ -2,13 +2,28 @@
 <html lang="zh-TW">
 <head>
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RYRFB7LS7N"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var devParam = params.get('dev');
+        var devStorageKey = 'ga_exclude_device_v1';
 
-      gtag('config', 'G-RYRFB7LS7N');
+        if (devParam === '1') localStorage.setItem(devStorageKey, '1');
+        if (devParam === '0') localStorage.removeItem(devStorageKey);
+
+        var isExcludedDevice = localStorage.getItem(devStorageKey) === '1';
+        if (isExcludedDevice) return;
+
+        var g = document.createElement('script');
+        g.async = true;
+        g.src = 'https://www.googletagmanager.com/gtag/js?id=G-RYRFB7LS7N';
+        document.head.appendChild(g);
+
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function gtag() { dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', 'G-RYRFB7LS7N');
+      })();
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">

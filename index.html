@@ -1306,7 +1306,7 @@
                 utter.lang = 'zh-TW';
                 const voice = pickTTSCVoice();
                 if (voice) utter.voice = voice;
-                utter.rate = 0.8;
+                utter.rate = 0.65;
                 utter.onerror = () => {
                     window.speechSynthesis.cancel();
                     setTimeout(() => {
@@ -1315,7 +1315,7 @@
                             u2.lang = 'zh-TW';
                             const v = pickTTSCVoice();
                             if (v) u2.voice = v;
-                            u2.rate = 0.8;
+                            u2.rate = 0.65;
                             window.speechSynthesis.speak(u2);
                         } catch (_) {}
                     }, 200);

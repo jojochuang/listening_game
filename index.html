@@ -1443,6 +1443,7 @@
                 for (let i = startRow; i < endRow; i++) {
                     const row = rows[i];
                     if (!row || row.length < 1) continue;
+                    if (looksLikeQuestionHeaderRow(row)) continue;
                     const wordCell = (row[questionCol >= 0 ? questionCol : 0] || '').trim();
                     if (!wordCell) continue;
                     const imgFromB = (row[imageCol >= 0 ? imageCol : 1] || '').trim();
@@ -1464,6 +1465,7 @@
             for (let i = fbStart; i < fbEnd; i++) {
                 const row = rows[i];
                 if (!row || row.length < 1) continue;
+                if (looksLikeQuestionHeaderRow(row)) continue;
                 const raw = (row[0] || '').trim();
                 if (!raw) continue;
                 const imgFromB = (row[1] || '').trim();
@@ -1750,9 +1752,8 @@
             let lastErr = null;
             for (const url of candidates) {
                 try {
-                    let rows = await fetchSheetCsvUrl(url);
-                    if (includeLabels === false && rows.length) rows = rows.slice(1);
-                    return rows;
+                    // CSV 回傳 range 內每一列；不再假設首列是欄名（改由呼叫端抓正確範圍）
+                    return await fetchSheetCsvUrl(url);
                 } catch (e) { lastErr = e; }
             }
             throw lastErr || new Error('試算表載入失敗');
@@ -1780,12 +1781,23 @@
             return headerRow + 1 + (lesson - 1) * ROWS_PER_LESSON;
         }
 
-        /** 多抓上一列當 gviz 欄名，正文剛好 25 列 */
-        function lessonA1RangePadded(headerRow, lesson) {
+        /** 課次正文範圍（1-based，含首尾）。第一課 = A2:C26 */
+        function lessonA1Range(headerRow, lesson) {
             const start0 = lessonAbsStart(headerRow, lesson);
-            const pad1 = Math.max(1, start0);
+            const start1 = start0 + 1;
             const end1 = start0 + ROWS_PER_LESSON;
-            return 'A' + pad1 + ':C' + end1;
+            return 'A' + start1 + ':C' + end1;
+        }
+
+        function looksLikeQuestionHeaderRow(row) {
+            if (!row || !row.length) return false;
+            const a = (row[0] || '').trim();
+            const b = (row[1] || '').trim();
+            const c = (row[2] || '').trim();
+            if (a.includes('問題') && b.includes('圖片')) return true;
+            if (a.includes('題目') && b.includes('圖片')) return true;
+            if (b.includes('題目') && c.includes('圖片')) return true;
+            return false;
         }
 
         function placeLessonRows(lesson, lessonRows) {
@@ -1829,7 +1841,9 @@
 
         async function fetchOneLessonRows(sid, gidVal, lesson) {
             const headerRow = questionHeaderRow >= 0 ? questionHeaderRow : 0;
-            const rows = await fetchSheetCsv(sid, gidVal, lessonA1RangePadded(headerRow, lesson), false);
+            // 直接抓課次正文（不含標題列）；勿依賴 gviz 把 range 首列當欄名
+            let rows = await fetchSheetCsv(sid, gidVal, lessonA1Range(headerRow, lesson), false);
+            if (rows.length && looksLikeQuestionHeaderRow(rows[0])) rows = rows.slice(1);
             return rows.slice(0, ROWS_PER_LESSON);
         }
 

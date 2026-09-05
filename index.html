@@ -890,6 +890,65 @@
             color: #333;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
+        .done-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            background: rgba(28, 36, 48, 0.42);
+            z-index: 1100;
+            padding: 16px;
+        }
+        .done-overlay.show {
+            display: grid;
+        }
+        .celebrate-panel {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 1.25rem;
+            justify-items: center;
+            max-width: 92vw;
+        }
+        .celebrate-banner {
+            padding: 1.1rem 2.4rem;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #fff7ed, #ffe4e6 55%, #fef9c3);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+        }
+        .celebrate-text {
+            margin: 0;
+            font-size: clamp(2.2rem, 7vw, 3.6rem);
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            color: #b91c1c;
+            text-shadow: 0 2px 0 rgba(255, 255, 255, 0.7);
+            text-align: center;
+        }
+        .celebrate-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            justify-content: center;
+        }
+        .celebrate-actions .btn {
+            min-width: 7.2rem;
+        }
+        .celebrate-actions .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        body.night-mode .celebrate-banner {
+            background: linear-gradient(135deg, #3a2a1a, #4a2030 55%, #3a3a1a);
+        }
+        body.night-mode .celebrate-text {
+            color: #fca5a5;
+            text-shadow: none;
+        }
+        body.night-mode .celebrate-actions .btn-secondary {
+            background: #2a2a2a;
+            color: #eee;
+        }
         .success-banner {
             position: fixed;
             top: 50%;
@@ -1030,6 +1089,14 @@
         <div id="successBanner" class="success-banner" aria-live="polite">答對了！</div>
         <div id="startOverlay" class="start-overlay" style="display:none;">
             <span>點擊開始</span>
+        </div>
+        <div id="doneOverlay" class="done-overlay" hidden>
+            <div class="celebrate-panel">
+                <div class="celebrate-banner" role="status">
+                    <p class="celebrate-text">You did it</p>
+                </div>
+                <div class="celebrate-actions" id="doneActions"></div>
+            </div>
         </div>
         </div>
     </div>
@@ -2316,19 +2383,97 @@
             });
         }
 
+        function hideDoneOverlay() {
+            const done = document.getElementById('doneOverlay');
+            if (!done) return;
+            done.classList.remove('show');
+            done.hidden = true;
+            const actions = document.getElementById('doneActions');
+            if (actions) actions.innerHTML = '';
+        }
+
+        function restartCurrentLessonInMode(newMode) {
+            if (!questions.length) return;
+            hideDoneOverlay();
+            const start = document.getElementById('startOverlay');
+            if (start) {
+                const span = start.querySelector('span');
+                if (span) span.textContent = '點擊開始';
+                start.style.display = 'none';
+            }
+            if (newMode) {
+                displayMode = newMode;
+                updateModeLabel();
+            }
+            questionOrder = shuffle(questions.map((_, i) => i));
+            currentIndex = 0;
+            score = 0;
+            scoreText.textContent = '得分：0';
+            locked = false;
+            setMessage('', '');
+            isFirstRender = false;
+            unlockSpeech();
+            renderQuestion();
+        }
+
+        function showDoneOverlay() {
+            const done = document.getElementById('doneOverlay');
+            const actions = document.getElementById('doneActions');
+            if (!done || !actions) return;
+
+            const modeButtons = {
+                easy: { mode: 'easy', label: '圖片＋注音' },
+                hard: { mode: 'hard', label: '純注音' },
+                chinese: { mode: 'chinese', label: '純中文' }
+            };
+            // 完成圖片＋注音：上一單元、純注音、純中文、下一單元
+            // 完成純注音／純中文：上一單元、另外兩種模式、下一單元
+            const otherModes = ['easy', 'hard', 'chinese'].filter((m) => m !== displayMode);
+
+            actions.innerHTML = '';
+            const prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.className = 'btn btn-secondary';
+            prevBtn.textContent = '上一單元';
+            prevBtn.disabled = currentLesson <= 1 || lessonSwitchBusy;
+            prevBtn.addEventListener('click', () => {
+                hideDoneOverlay();
+                goPrevLesson();
+            });
+            actions.appendChild(prevBtn);
+
+            otherModes.forEach((m) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-primary';
+                btn.textContent = modeButtons[m].label;
+                btn.addEventListener('click', () => restartCurrentLessonInMode(modeButtons[m].mode));
+                actions.appendChild(btn);
+            });
+
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.className = 'btn btn-secondary';
+            nextBtn.textContent = '下一單元';
+            nextBtn.disabled = currentLesson >= numLessons || lessonSwitchBusy;
+            nextBtn.addEventListener('click', () => {
+                hideDoneOverlay();
+                goNextLesson();
+            });
+            actions.appendChild(nextBtn);
+
+            done.hidden = false;
+            done.classList.add('show');
+        }
+
         function goToNextQuestion() {
             if (!questions.length) return;
-            // 最後一題答對後：停在完成畫面，不要自動回到第一題
+            // 最後一題答對後：顯示完成橫幅與模式／單元按鈕
             if (currentIndex >= questions.length - 1) {
                 locked = true;
                 progressText.textContent = questions.length + '/' + questions.length;
-                setMessage('You did it!', 'success');
-                const overlay = document.getElementById('startOverlay');
-                if (overlay) {
-                    const span = overlay.querySelector('span');
-                    if (span) span.textContent = 'You did it!';
-                    overlay.style.display = 'flex';
-                }
+                setMessage('', '');
+                showDoneOverlay();
                 return;
             }
             currentIndex = currentIndex + 1;
@@ -2345,30 +2490,10 @@
         if (modeTextEl) {
             modeTextEl.addEventListener('click', () => {
                 if (!questions.length) return;
+                const done = document.getElementById('doneOverlay');
+                if (done && done.classList.contains('show')) return;
                 displayMode = displayMode === 'easy' ? 'hard' : (displayMode === 'hard' ? 'chinese' : 'easy');
                 updateModeLabel();
-
-                // 完成本課最後一題後換模式：同一課重新隨機出題
-                const overlay = document.getElementById('startOverlay');
-                const finishedLesson =
-                    locked &&
-                    currentIndex >= questions.length - 1 &&
-                    overlay &&
-                    overlay.style.display === 'flex';
-                if (finishedLesson) {
-                    questionOrder = shuffle(questions.map((_, i) => i));
-                    currentIndex = 0;
-                    score = 0;
-                    scoreText.textContent = '得分：0';
-                    locked = false;
-                    setMessage('', '');
-                    if (overlay) {
-                        const span = overlay.querySelector('span');
-                        if (span) span.textContent = '點擊開始';
-                        overlay.style.display = 'none';
-                    }
-                    isFirstRender = true;
-                }
                 renderQuestion();
             });
         }
@@ -2425,8 +2550,13 @@
             scoreText.textContent = '得分：0';
             progressText.textContent = '1/' + questions.length;
             setMessage('', '');
+            hideDoneOverlay();
             const overlay = document.getElementById('startOverlay');
-            if (overlay) overlay.style.display = 'none';
+            if (overlay) {
+                const span = overlay.querySelector('span');
+                if (span) span.textContent = '點擊開始';
+                overlay.style.display = 'none';
+            }
             updateLessonUI();
             renderQuestion();
             if (window.history && window.history.replaceState) {

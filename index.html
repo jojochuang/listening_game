@@ -1203,25 +1203,23 @@
 
         function pickTTSCVoice() {
             if (!('speechSynthesis' in window)) return null;
-            const voices = window.speechSynthesis.getVoices();
-            if (!voices || !voices.length) return null;
+            const voices = window.speechSynthesis.getVoices() || [];
+            if (!voices.length) return null;
 
-            const lower = s => (s || '').toLowerCase();
-
-            // 1. 優先 zh-TW，並盡量選到「美佳 / Meijia」
-            const zhTwVoices = voices.filter(v => lower(v.lang).startsWith('zh-tw'));
-            if (zhTwVoices.length) {
-                let preferred = zhTwVoices.find(v => v.name.includes('美佳') || lower(v.name).includes('meijia'));
-                if (!preferred) preferred = zhTwVoices[0];
-                return preferred;
-            }
-
-            // 2. 沒有 zh-TW，就選任一個中文語音（zh-*)
-            const zhVoices = voices.filter(v => lower(v.lang).startsWith('zh'));
-            if (zhVoices.length) return zhVoices[0];
-
-            // 3. 最後備援：用第一個可用聲音
-            return voices[0];
+            const zh = voices.filter(
+                (v) => /^zh(-|_|$)/i.test(v.lang) || /中文|國語|台|漢語|TW|HK|CN/i.test(v.name)
+            );
+            // Chrome：優先本機語音，遠端 Google 音有時會播不出來
+            const local = zh.filter((v) => v.localService);
+            const pool = local.length ? local : zh;
+            if (!pool.length) return voices[0];
+            const tw = pool.filter((v) => /zh-TW|TW|台灣|美佳|Meijia|Tingting|Sinji/i.test(v.lang + v.name));
+            return (
+                tw.find((v) => /美佳|Meijia/i.test(v.name)) ||
+                tw[tw.length - 1] ||
+                pool[pool.length - 1] ||
+                voices[0]
+            );
         }
 
         // 重用音效物件：避免 new Audio() 過多導致某些瀏覽器後續不出聲
@@ -1251,78 +1249,219 @@
             }
         }
 
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
+        const isIOS =
+            isIPhone ||
+            /iPad/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        // Mac／Windows Chrome（不含 iOS Chrome）：TTS 常需手勢解鎖，且 cancel 後易靜音
+        const isChromeDesktop =
+            /Chrome\//.test(navigator.userAgent) &&
+            !/Edg\//.test(navigator.userAgent) &&
+            !/CriOS|Android|Mobile/.test(navigator.userAgent);
+        let speechUnlocked = !isIPhone && !isChromeDesktop;
+        let pendingSpeakText = '';
+        let speakTimer = null;
 
-        function unlockIOSAudio() {
+        function unlockSpeech() {
             if (!('speechSynthesis' in window)) return;
             try {
-                const u = new SpeechSynthesisUtterance('\u00A0');
-                u.lang = 'zh-TW';
-                u.volume = 0.01;
-                window.speechSynthesis.speak(u);
+                const syn = window.speechSynthesis;
+                if (typeof syn.resume === 'function') syn.resume();
+                const warm = new SpeechSynthesisUtterance('\u00A0');
+                warm.volume = 0;
+                warm.rate = 2;
+                warm.lang = 'zh-TW';
+                syn.speak(warm);
+                speechUnlocked = true;
+            } catch (_) {
+                speechUnlocked = true;
+            }
+            try {
+                window.speechSynthesis.getVoices();
             } catch (_) {}
         }
 
-        // 某些瀏覽器同分頁玩久後 speechSynthesis / Audio 會「卡死」；加上自動重置
-        function resetAudioEngines(reason) {
+        // bfcache／回到前景時：Chrome 勿任意 cancel（會把人工語音弄啞）
+        function resetAudioEngines(hard) {
             try {
                 if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    if (typeof window.speechSynthesis.resume === 'function') window.speechSynthesis.resume();
+                    if (hard) window.speechSynthesis.cancel();
+                    if (typeof window.speechSynthesis.resume === 'function') {
+                        window.speechSynthesis.resume();
+                    }
+                    window.speechSynthesis.getVoices();
                 }
             } catch (_) {}
-            try { unlockIOSAudio(); } catch (_) {}
-            // 預先觸發一次 getVoices，避免 refresh 後 voices 未就緒
-            try { if ('speechSynthesis' in window) window.speechSynthesis.getVoices(); } catch (_) {}
-            // 重新定位音量（有些狀態下會被設成 0）
             try { Object.values(SFX).forEach((a) => { a.volume = 0.8; }); } catch (_) {}
         }
 
         window.addEventListener('pageshow', (e) => {
-            // bfcache 還原時常見沒聲音：強制重置
-            if (e && e.persisted) resetAudioEngines('pageshow.persisted');
+            if (e && e.persisted) resetAudioEngines(true);
         });
-        window.addEventListener('focus', () => resetAudioEngines('focus'));
+        window.addEventListener('focus', () => {
+            if (isChromeDesktop) {
+                try {
+                    if (window.speechSynthesis && window.speechSynthesis.paused) {
+                        window.speechSynthesis.resume();
+                    }
+                } catch (_) {}
+            } else {
+                resetAudioEngines(false);
+            }
+        });
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) resetAudioEngines('visibility');
+            if (document.hidden) return;
+            if (isChromeDesktop) {
+                try {
+                    if (window.speechSynthesis && window.speechSynthesis.paused) {
+                        window.speechSynthesis.resume();
+                    }
+                } catch (_) {}
+            } else {
+                resetAudioEngines(false);
+            }
         });
 
-        function speakAfterUnlock(text, delayMs) {
-            unlockIOSAudio();
-            const ms = typeof delayMs === 'number' ? delayMs : 120;
-            setTimeout(() => speak(text), ms);
-        }
-
-        function speak(text) {
+        function speakNow(text) {
             if (!('speechSynthesis' in window)) return;
             const clean = onlyHan(text) || text;
             if (!clean) return;
             const syn = window.speechSynthesis;
-            syn.cancel();
-            if (typeof syn.resume === 'function') syn.resume();
-            setTimeout(() => {
-                if (!('speechSynthesis' in window)) return;
+            try {
+                if (typeof syn.resume === 'function') syn.resume();
                 const utter = new SpeechSynthesisUtterance(clean);
                 utter.lang = 'zh-TW';
-                const voice = pickTTSCVoice();
-                if (voice) utter.voice = voice;
                 utter.rate = 0.65;
+                utter.volume = 1;
+                const voice = pickTTSCVoice();
+                if (voice) {
+                    try {
+                        utter.voice = voice;
+                        if (voice.lang) utter.lang = voice.lang;
+                    } catch (_) {}
+                }
                 utter.onerror = () => {
-                    window.speechSynthesis.cancel();
                     setTimeout(() => {
                         try {
+                            if (typeof syn.resume === 'function') syn.resume();
                             const u2 = new SpeechSynthesisUtterance(clean);
                             u2.lang = 'zh-TW';
-                            const v = pickTTSCVoice();
-                            if (v) u2.voice = v;
                             u2.rate = 0.65;
-                            window.speechSynthesis.speak(u2);
+                            u2.volume = 1;
+                            syn.speak(u2);
                         } catch (_) {}
-                    }, 200);
+                    }, 180);
                 };
-                window.speechSynthesis.speak(utter);
-            }, 80);
+                syn.speak(utter);
+                if (isChromeDesktop) {
+                    setTimeout(() => {
+                        try {
+                            if (syn.paused) syn.resume();
+                        } catch (_) {}
+                    }, 80);
+                }
+            } catch (_) {}
         }
+
+        function speak(text, opts) {
+            if (!('speechSynthesis' in window)) return;
+            const clean = onlyHan(text) || text;
+            if (!clean) return;
+            const force = !!(opts && opts.force);
+            if ((isIPhone || isChromeDesktop) && !speechUnlocked && !force) {
+                pendingSpeakText = clean;
+                return;
+            }
+            if (speakTimer) {
+                clearTimeout(speakTimer);
+                speakTimer = null;
+            }
+            try {
+                window.speechSynthesis.cancel();
+                if (typeof window.speechSynthesis.resume === 'function') {
+                    window.speechSynthesis.resume();
+                }
+            } catch (_) {}
+
+            let delay = 40;
+            if (isChromeDesktop) delay = force ? 80 : 120;
+            else if (isIOS) delay = force ? 60 : 140;
+            else if (force) delay = 0;
+            speakTimer = setTimeout(() => speakNow(clean), delay);
+        }
+
+        function speakFromUserGesture(text) {
+            unlockSpeech();
+            pendingSpeakText = '';
+            if (speakTimer) {
+                clearTimeout(speakTimer);
+                speakTimer = null;
+            }
+            try {
+                window.speechSynthesis.cancel();
+                if (typeof window.speechSynthesis.resume === 'function') {
+                    window.speechSynthesis.resume();
+                }
+            } catch (_) {}
+            const clean = onlyHan(text) || text;
+            if (!clean) return;
+            if (isIPhone) {
+                speakNow(clean);
+            } else if (isChromeDesktop) {
+                speakTimer = setTimeout(() => speakNow(clean), 60);
+            } else {
+                speakNow(clean);
+            }
+        }
+
+        function speakAfterUnlock(text, delayMs) {
+            unlockSpeech();
+            const ms = typeof delayMs === 'number' ? delayMs : (isChromeDesktop ? 120 : 120);
+            setTimeout(() => speak(text, { force: true }), ms);
+        }
+
+        function bindSpeechUnlockOnce() {
+            if (!isIPhone && !isChromeDesktop) return;
+            const unlock = () => {
+                unlockSpeech();
+                if (pendingSpeakText) {
+                    const t = pendingSpeakText;
+                    pendingSpeakText = '';
+                    if (speakTimer) {
+                        clearTimeout(speakTimer);
+                        speakTimer = null;
+                    }
+                    try {
+                        window.speechSynthesis.cancel();
+                        if (typeof window.speechSynthesis.resume === 'function') {
+                            window.speechSynthesis.resume();
+                        }
+                    } catch (_) {}
+                    if (isIPhone) speakNow(t);
+                    else speakTimer = setTimeout(() => speakNow(t), 60);
+                }
+            };
+            document.addEventListener('touchend', unlock, { once: true, passive: true });
+            document.addEventListener('click', unlock, { once: true });
+        }
+
+        if ('speechSynthesis' in window) {
+            try {
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = () => {
+                    window.speechSynthesis.getVoices();
+                };
+            } catch (_) {}
+            if (isChromeDesktop) {
+                setInterval(() => {
+                    try {
+                        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+                    } catch (_) {}
+                }, 4000);
+            }
+        }
+        bindSpeechUnlockOnce();
 
         const params = getQueryParams();
         const DEFAULT_MENU_SHEET = '1264gdkuMnIn2k5L5KM69yumBfJFdYVhxzzsC-2R5Q2U';
@@ -2200,7 +2339,7 @@
             if (!questions.length) return;
             const realIndex = questionOrder[currentIndex];
             const q = questions[realIndex];
-            if (q) speakAfterUnlock(q.rawText);
+            if (q) speakFromUserGesture(q.rawText);
         });
 
         if (modeTextEl) {
@@ -2320,14 +2459,11 @@
                     document.getElementById('startOverlay').addEventListener('click', () => {
                         document.getElementById('startOverlay').style.display = 'none';
                         const ri = questionOrder[currentIndex];
-                        if (questions[ri]) speakAfterUnlock(questions[ri].rawText);
+                        if (questions[ri]) speakFromUserGesture(questions[ri].rawText);
                     });
                 } catch (e) {
                     console.error(e);
                     setMessage('載入題目時發生錯誤：' + (e && e.message ? e.message : e), 'error');
-                }
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.onvoiceschanged = () => pickTTSCVoice();
                 }
                 return;
             }
@@ -2356,17 +2492,11 @@
                 document.getElementById('startOverlay').addEventListener('click', () => {
                     document.getElementById('startOverlay').style.display = 'none';
                     const ri = questionOrder[currentIndex];
-                    if (questions[ri]) speakAfterUnlock(questions[ri].rawText);
+                    if (questions[ri]) speakFromUserGesture(questions[ri].rawText);
                 });
             } catch (e) {
                 console.error(e);
                 setMessage('載入題目時發生錯誤：' + (e && e.message ? e.message : e), 'error');
-            }
-
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.onvoiceschanged = () => {
-                    pickTTSCVoice();
-                };
             }
         }
 

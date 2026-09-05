@@ -1571,6 +1571,8 @@
         let questionOrder = [];
         let currentIndex = 0;
         let score = 0;
+        let pendingRetry = [];
+        let hadWrongThisQuestion = false;
         let sheetRows = [];
         let numLessons = 1;
         let currentLesson = 1;
@@ -2268,6 +2270,21 @@
             }
         }
 
+        function updateScoreUI() {
+            const total = questions.length || 0;
+            scoreText.textContent = total ? ('得分：' + score + '/' + total) : ('得分：' + score);
+        }
+
+        function beginLessonQueue() {
+            questionOrder = shuffle(questions.map((_, i) => i));
+            currentIndex = 0;
+            score = 0;
+            pendingRetry = [];
+            hadWrongThisQuestion = false;
+            locked = false;
+            updateScoreUI();
+        }
+
         // 每題：亂數選一列為正解（念 A、正確答案為 B），另 5 個選項從其他列各取一對 (A,B)
         // 六個框都顯示 B 欄圖片（或注音）＋底下對應 A 欄的中文字
         function makeQuestion(index) {
@@ -2287,12 +2304,13 @@
         }
 
         function renderQuestion() {
-            if (!questions.length) return;
+            if (!questions.length || !questionOrder.length) return;
             const realIndex = questionOrder[currentIndex];
             const { correct, options } = makeQuestion(realIndex);
             gridEl.innerHTML = '';
             locked = false;
-            progressText.textContent = (currentIndex + 1) + '/' + questions.length;
+            hadWrongThisQuestion = false;
+            progressText.textContent = (currentIndex + 1) + '/' + questionOrder.length;
             setMessage('', '');
             if (isFirstRender) {
                 isFirstRender = false;
@@ -2358,8 +2376,13 @@
                     if (opt.isCorrect) {
                         locked = true;
                         card.classList.add('correct');
-                        score += 1;
-                        scoreText.textContent = '得分：' + score;
+                        // 只有第一次就按對才計分；否則排入下一輪
+                        if (!hadWrongThisQuestion) {
+                            score += 1;
+                            updateScoreUI();
+                        } else {
+                            pendingRetry.push(realIndex);
+                        }
                         setMessage('答對了！', 'success');
                         playSound('correct', false);
                         const banner = document.getElementById('successBanner');
@@ -2373,6 +2396,7 @@
                             setTimeout(() => goToNextQuestion(), 1000);
                         }
                     } else {
+                        hadWrongThisQuestion = true;
                         card.classList.add('wrong');
                         setMessage('再試試', 'error');
                         playSound('wrong', true);
@@ -2405,11 +2429,7 @@
                 displayMode = newMode;
                 updateModeLabel();
             }
-            questionOrder = shuffle(questions.map((_, i) => i));
-            currentIndex = 0;
-            score = 0;
-            scoreText.textContent = '得分：0';
-            locked = false;
+            beginLessonQueue();
             setMessage('', '');
             isFirstRender = false;
             unlockSpeech();
@@ -2468,16 +2488,27 @@
 
         function goToNextQuestion() {
             if (!questions.length) return;
-            // 最後一題答對後：顯示完成橫幅與模式／單元按鈕
-            if (currentIndex >= questions.length - 1) {
-                locked = true;
-                progressText.textContent = questions.length + '/' + questions.length;
-                setMessage('', '');
-                showDoneOverlay();
+            // 本輪還沒走完
+            if (currentIndex < questionOrder.length - 1) {
+                currentIndex = currentIndex + 1;
+                renderQuestion();
                 return;
             }
-            currentIndex = currentIndex + 1;
-            renderQuestion();
+            // 本輪結束：沒一次就對的題進入下一輪
+            if (pendingRetry.length) {
+                questionOrder = shuffle(pendingRetry.slice());
+                pendingRetry = [];
+                currentIndex = 0;
+                locked = false;
+                renderQuestion();
+                setMessage('再練習一次還沒一次就對的題', 'info');
+                return;
+            }
+            // 全部題目都曾一次就對（分數拿滿）才完成
+            locked = true;
+            progressText.textContent = questions.length + '/' + questions.length;
+            setMessage('', '');
+            showDoneOverlay();
         }
 
         playBtn.addEventListener('click', () => {
@@ -2544,11 +2575,8 @@
                 updateLessonUI();
                 return;
             }
-            questionOrder = shuffle(questions.map((_, i) => i));
-            currentIndex = 0;
-            score = 0;
-            scoreText.textContent = '得分：0';
-            progressText.textContent = '1/' + questions.length;
+            beginLessonQueue();
+            progressText.textContent = '1/' + questionOrder.length;
             setMessage('', '');
             hideDoneOverlay();
             const overlay = document.getElementById('startOverlay');
@@ -2599,10 +2627,7 @@
                     currentLesson = lessonParam && lessonParam >= 1 && lessonParam <= numLessons ? lessonParam : 1;
                     questions = buildQuestionPool(rows, currentLesson);
                     if (!questions.length) { setMessage('沒有找到任何題目。', 'error'); return; }
-                    questionOrder = shuffle(questions.map((_, i) => i));
-                    currentIndex = 0;
-                    score = 0;
-                    scoreText.textContent = '得分：0';
+                    beginLessonQueue();
                     updateLessonUI();
                     renderQuestion();
                     setMessage('載入完成', 'info');
@@ -2632,10 +2657,7 @@
                 const prefer = lessonParam && lessonParam >= 1 ? lessonParam : 1;
                 await loadBookPreferLesson(sheetId, gid, prefer);
                 currentLesson = prefer;
-                questionOrder = shuffle(questions.map((_, i) => i));
-                currentIndex = 0;
-                score = 0;
-                scoreText.textContent = '得分：0';
+                beginLessonQueue();
                 updateLessonUI();
                 renderQuestion();
                 setMessage('載入完成', 'info');

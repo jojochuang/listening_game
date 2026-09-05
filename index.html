@@ -2347,6 +2347,28 @@
                 if (!questions.length) return;
                 displayMode = displayMode === 'easy' ? 'hard' : (displayMode === 'hard' ? 'chinese' : 'easy');
                 updateModeLabel();
+
+                // 完成本課最後一題後換模式：同一課重新隨機出題
+                const overlay = document.getElementById('startOverlay');
+                const finishedLesson =
+                    locked &&
+                    currentIndex >= questions.length - 1 &&
+                    overlay &&
+                    overlay.style.display === 'flex';
+                if (finishedLesson) {
+                    questionOrder = shuffle(questions.map((_, i) => i));
+                    currentIndex = 0;
+                    score = 0;
+                    scoreText.textContent = '得分：0';
+                    locked = false;
+                    setMessage('', '');
+                    if (overlay) {
+                        const span = overlay.querySelector('span');
+                        if (span) span.textContent = '點擊開始';
+                        overlay.style.display = 'none';
+                    }
+                    isFirstRender = true;
+                }
                 renderQuestion();
             });
         }

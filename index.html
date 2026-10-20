@@ -29,6 +29,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <script>
         document.documentElement.style.setProperty('--viewport-height', (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px');
+        if (/iPhone|iPod/.test(navigator.userAgent)) document.documentElement.classList.add('iphone');
     </script>
     <title>聽音辨字遊戲</title>
     <style>
@@ -519,6 +520,9 @@
         }
         #fullscreenBtn {
             min-width: 7.5em;
+        }
+        html.iphone #fullscreenBtn {
+            display: none !important;
         }
         #gameView:fullscreen,
         #gameView:-webkit-full-screen {
@@ -2729,7 +2733,9 @@
             }
             updateFullscreenBtn();
         }
-        if (fullscreenBtn) fullscreenBtn.addEventListener('click', toggleFullscreen);
+        if (fullscreenBtn && !document.documentElement.classList.contains('iphone')) {
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+        }
         document.addEventListener('fullscreenchange', updateFullscreenBtn);
         document.addEventListener('webkitfullscreenchange', updateFullscreenBtn);
 

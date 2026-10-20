@@ -706,7 +706,9 @@
         html.iphone body.menu-page #toolBarOuter .lesson-switcher,
         html.iphone body.menu-page #toolBarOuter #modeText,
         html.iphone body.menu-page #toolBarOuter #toggleLabelsBtn,
-        html.iphone body.menu-page #toolBarOuter #voiceModeControlsGame {
+        html.iphone body.menu-page #toolBarOuter #voiceModeControlsGame,
+        html.iphone body.menu-page #toolBarOuter .back-link,
+        html.iphone body.menu-page #toolBarOuter .donation-link-header {
             display: none !important;
         }
         html.iphone body.game-page #gameView {
@@ -721,6 +723,34 @@
             left: auto;
             right: auto;
             box-shadow: none;
+            flex-wrap: nowrap;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        html.iphone body.game-page #gameView .game-header .header-back-links {
+            display: none;
+        }
+        html.iphone body.game-page #gameView .game-header .title-banner {
+            justify-content: flex-start;
+        }
+        html.iphone body.game-page #gameView .game-header .title-banner-inner {
+            font-size: 1.05em;
+            padding: 4px 14px;
+            white-space: nowrap;
+        }
+        html.iphone body.game-page #gameView .game-header .header-right {
+            flex-wrap: nowrap;
+            gap: 4px;
+        }
+        html.iphone body.game-page #gameView .game-header .status-pill {
+            padding: 3px 8px;
+            font-size: 0.8em;
+            white-space: nowrap;
+        }
+        html.iphone #toolBarOuter .back-link,
+        html.iphone #toolBarOuter .donation-link-header {
+            padding: 4px 8px;
+            font-size: 0.85em;
         }
         html.iphone body.game-page #gameView .grid {
             flex: 0 0 auto;
@@ -1371,6 +1401,9 @@
             const nightBtn = document.getElementById('nightToggleTool');
             if (!panel) return;
             [
+                document.querySelector('#gameView .header-back-links a.back-link'),
+                document.getElementById('backToMenu'),
+                document.querySelector('#gameView .donation-link-header'),
                 document.querySelector('#gameView .lesson-switcher'),
                 document.getElementById('modeText'),
                 document.getElementById('toggleLabelsBtn'),

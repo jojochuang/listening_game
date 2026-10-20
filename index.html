@@ -2137,12 +2137,29 @@
             return headerRow + 1 + (lesson - 1) * ROWS_PER_LESSON;
         }
 
-        /** 課次正文範圍（1-based，含首尾）。第一課 = A2:C26 */
+        /** 課次正文範圍（1-based，含首尾）。第一課 = A2:D26（D 欄為課名） */
         function lessonA1Range(headerRow, lesson) {
             const start0 = lessonAbsStart(headerRow, lesson);
             const start1 = start0 + 1;
             const end1 = start0 + ROWS_PER_LESSON;
-            return 'A' + start1 + ':C' + end1;
+            return 'A' + start1 + ':D' + end1;
+        }
+
+        /** 課名在該課第一列的 D 欄（D2、D27、D52…）；空白則回傳空字串。nameCol 預設 3；只抓 D 欄時傳 0 */
+        function getLessonNameFromRows(rows, headerRow, lesson, nameCol) {
+            if (!rows || !rows.length || !lesson) return '';
+            const hr = headerRow >= 0 ? headerRow : 0;
+            const rowIdx = lessonAbsStart(hr, lesson);
+            const row = rows[rowIdx];
+            if (!row || !row.length) return '';
+            const col = nameCol != null ? nameCol : 3;
+            const raw = row[col];
+            return (raw != null ? String(raw) : '').trim();
+        }
+
+        function formatLessonLabel(lesson, rows, headerRow, nameCol) {
+            const name = getLessonNameFromRows(rows || sheetRows, headerRow != null ? headerRow : questionHeaderRow, lesson, nameCol);
+            return name || ('第 ' + lesson + ' 課');
         }
 
         function looksLikeQuestionHeaderRow(row) {
@@ -2177,7 +2194,7 @@
         }
 
         async function probeQuestionHeader(sid, gidVal) {
-            const probe = await fetchSheetCsv(sid, gidVal, 'A1:C' + HEADER_PROBE_END);
+            const probe = await fetchSheetCsv(sid, gidVal, 'A1:D' + HEADER_PROBE_END);
             const detected = detectQuestionHeader(probe);
             if (detected.headerRow >= 0) {
                 questionHeaderRow = detected.headerRow;
@@ -2319,7 +2336,10 @@
                                     const rows = await fetchCsvFromUrl(staticBooks[i].csv);
                                     const dataCount = rows.length - 1;
                                     const n = Math.max(1, Math.ceil(dataCount / 25));
-                                    lessonSelect.innerHTML = Array.from({ length: n }, (_, k) => '<option value="' + (k + 1) + '">第 ' + (k + 1) + ' 課</option>').join('');
+                                    lessonSelect.innerHTML = Array.from({ length: n }, (_, k) => {
+                                        const lesson = k + 1;
+                                        return '<option value="' + lesson + '">' + escapeHtml(formatLessonLabel(lesson, rows, 0)) + '</option>';
+                                    }).join('');
                                 } catch (e) {
                                     lessonSelect.innerHTML = '<option value="">載入失敗</option>';
                                     if (errEl) { errEl.style.display = 'block'; errEl.textContent = '載入失敗：' + e.message; errEl.className = 'message error'; }
@@ -2367,10 +2387,16 @@
                     const errEl = document.getElementById('menuError');
                     if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
                     try {
-                        // 只抓 A 欄估課數，不下載整冊（含圖片網址）
-                        const aRows = await fetchSheetCsv(DEFAULT_MENU_SHEET, gidVal, 'A1:A800');
+                        // 抓 A 欄估課數、D 欄課名，不下載整冊圖片網址
+                        const [aRows, dRows] = await Promise.all([
+                            fetchSheetCsv(DEFAULT_MENU_SHEET, gidVal, 'A1:A800'),
+                            fetchSheetCsv(DEFAULT_MENU_SHEET, gidVal, 'D1:D800')
+                        ]);
                         const n = countLessonsFromAColumn(aRows);
-                        lessonSelect.innerHTML = Array.from({ length: n }, (_, i) => '<option value="' + (i + 1) + '">第 ' + (i + 1) + ' 課</option>').join('');
+                        lessonSelect.innerHTML = Array.from({ length: n }, (_, i) => {
+                            const lesson = i + 1;
+                            return '<option value="' + lesson + '">' + escapeHtml(formatLessonLabel(lesson, dRows, 0, 0)) + '</option>';
+                        }).join('');
                     } catch (e) {
                         lessonSelect.innerHTML = '<option value="">載入失敗</option>';
                         if (errEl) {
@@ -2688,7 +2714,7 @@
             const label = document.getElementById('lessonLabel');
             const prevBtn = document.getElementById('lessonPrev');
             const nextBtn = document.getElementById('lessonNext');
-            if (label) label.textContent = '第 ' + currentLesson + ' 課';
+            if (label) label.textContent = formatLessonLabel(currentLesson);
             if (prevBtn) prevBtn.disabled = currentLesson <= 1 || lessonSwitchBusy;
             if (nextBtn) nextBtn.disabled = currentLesson >= numLessons || lessonSwitchBusy;
         }

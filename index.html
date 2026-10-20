@@ -659,6 +659,105 @@
             body.game-page .game-header .night-toggle { display: none; }
             body.menu-page .menu-view .night-toggle { display: none; }
         }
+        /* iPhone：標題不蓋住題目、遊戲區可滑動；底列只留播放，其餘進可收折工具列 */
+        html.iphone body.game-page .game-header .night-toggle,
+        html.iphone body.menu-page .menu-view .night-toggle {
+            display: none;
+        }
+        html.iphone .tool-bar-outer {
+            display: flex;
+            bottom: 0;
+            left: 0;
+            max-width: calc(100% - 108px);
+            z-index: 70;
+        }
+        html.iphone .tool-bar-outer .tool-bar-panel {
+            flex-wrap: wrap;
+            max-width: calc(100vw - 148px);
+            align-items: center;
+        }
+        html.iphone #toolBarOuter .lesson-switcher,
+        html.iphone #toolBarOuter .mode-pill,
+        html.iphone #toolBarOuter .voice-mode-controls,
+        html.iphone #toolBarOuter #toggleLabelsBtn {
+            flex-shrink: 0;
+        }
+        html.iphone #toolBarOuter .btn,
+        html.iphone #toolBarOuter .mode-pill {
+            min-width: 0;
+            padding: 6px 10px;
+            font-size: 0.85em;
+        }
+        html.iphone #toolBarOuter .voice-mode-btn {
+            padding: 6px 8px;
+            font-size: 0.8em;
+        }
+        html.iphone #toolBarOuter .lesson-arrow {
+            width: 28px;
+            height: 28px;
+            font-size: 1em;
+        }
+        html.iphone #toolBarOuter #lessonLabel {
+            min-width: 3em;
+            max-width: 8em;
+            font-size: 0.85em;
+            white-space: normal;
+        }
+        html.iphone body.menu-page #toolBarOuter .lesson-switcher,
+        html.iphone body.menu-page #toolBarOuter #modeText,
+        html.iphone body.menu-page #toolBarOuter #toggleLabelsBtn,
+        html.iphone body.menu-page #toolBarOuter #voiceModeControlsGame {
+            display: none !important;
+        }
+        html.iphone body.game-page #gameView {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-top: 0;
+            padding-bottom: calc(64px + env(safe-area-inset-bottom));
+        }
+        html.iphone body.game-page #gameView .game-header {
+            position: static;
+            top: auto;
+            left: auto;
+            right: auto;
+            box-shadow: none;
+        }
+        html.iphone body.game-page #gameView .grid {
+            flex: 0 0 auto;
+            min-height: auto;
+            max-height: none;
+            grid-auto-rows: auto;
+        }
+        html.iphone body.game-page #gameView .card {
+            height: auto;
+            min-height: 132px;
+        }
+        html.iphone body.game-page #gameView .card-main {
+            flex: 0 0 auto;
+            min-height: 72px;
+        }
+        html.iphone body.game-page #gameView .card-main img {
+            max-height: 120px;
+            min-height: 0;
+        }
+        html.iphone body.game-page #gameView .game-controls-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 61;
+            margin: 0;
+            padding: 6px 10px;
+            padding-bottom: max(6px, env(safe-area-inset-bottom));
+            background: transparent;
+            box-shadow: none;
+            justify-content: flex-end;
+            pointer-events: none;
+        }
+        html.iphone body.game-page #gameView .game-controls-bottom #playBtn {
+            pointer-events: auto;
+            min-width: 88px;
+        }
         /* 選單頁：只顯示選單，全畫面 */
         body.menu-page #gameView {
             display: none !important;
@@ -1264,6 +1363,20 @@
                 const on = !document.body.classList.contains('hide-card-numbers');
                 localStorage.setItem(keyNumbers, on ? '1' : '0');
                 updateNumberLabel();
+            });
+        })();
+        (function moveIphoneGameTools() {
+            if (!document.documentElement.classList.contains('iphone')) return;
+            const panel = document.querySelector('#toolBarOuter .tool-bar-panel');
+            const nightBtn = document.getElementById('nightToggleTool');
+            if (!panel) return;
+            [
+                document.querySelector('#gameView .lesson-switcher'),
+                document.getElementById('modeText'),
+                document.getElementById('toggleLabelsBtn'),
+                document.getElementById('voiceModeControlsGame')
+            ].filter(Boolean).forEach((node) => {
+                panel.insertBefore(node, nightBtn || null);
             });
         })();
         function getQueryParams() {

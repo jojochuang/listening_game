@@ -517,6 +517,20 @@
             background: #eeeeee;
             color: #333;
         }
+        #fullscreenBtn {
+            min-width: 7.5em;
+        }
+        #gameView:fullscreen,
+        #gameView:-webkit-full-screen {
+            width: 100%;
+            height: 100%;
+            background: #f0f4ff;
+            padding: 8px 12px;
+        }
+        body.night-mode #gameView:fullscreen,
+        body.night-mode #gameView:-webkit-full-screen {
+            background: #0d0d0d;
+        }
         .btn:active {
             transform: translateY(1px);
             box-shadow: none;
@@ -1135,6 +1149,7 @@
                 <button type="button" class="voice-mode-btn" data-mode="yue">廣東話</button>
                 <button type="button" class="voice-mode-btn" data-mode="both">中文和廣東話</button>
             </span>
+            <button type="button" class="btn btn-secondary" id="fullscreenBtn" aria-pressed="false">進入全螢幕</button>
             <button class="btn btn-primary" id="playBtn">播放</button>
         </div>
 
@@ -2691,6 +2706,32 @@
             const q = questions[realIndex];
             if (q) speakFromUserGesture(q.rawText);
         });
+
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        function updateFullscreenBtn() {
+            if (!fullscreenBtn) return;
+            const on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            fullscreenBtn.textContent = on ? '退出全螢幕' : '進入全螢幕';
+            fullscreenBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        }
+        async function toggleFullscreen() {
+            try {
+                const fs = document.fullscreenElement || document.webkitFullscreenElement;
+                if (fs) {
+                    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+                    if (exit) await exit.call(document);
+                } else if (gameView) {
+                    const req = gameView.requestFullscreen || gameView.webkitRequestFullscreen;
+                    if (req) await req.call(gameView);
+                }
+            } catch (e) {
+                // 瀏覽器可能阻擋全螢幕
+            }
+            updateFullscreenBtn();
+        }
+        if (fullscreenBtn) fullscreenBtn.addEventListener('click', toggleFullscreen);
+        document.addEventListener('fullscreenchange', updateFullscreenBtn);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenBtn);
 
         if (modeTextEl) {
             modeTextEl.addEventListener('click', () => {
